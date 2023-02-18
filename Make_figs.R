@@ -1,27 +1,10 @@
 rm(list=ls())
 
-library(RPANDA)
-library(tidyverse)
-library(knitr)
-library(FactoMineR) 
-library(factoextra)
-library(MLmetrics)
-library(corrplot)
-library(emmeans)
-library(matrixStats)
-library(maxnodf)
-library(bipartite)
-library(reshape2)
-library(neuralnet)
-library(lmerTest)
-library(lme4)
-library(car)
-library(ggpubr)
 
-source("Fonctions.R")
+source("Fonctions_network_inference.R")
 
-dir.create("../Figures/",showWarnings = F)
-dir.create("../Figures/SI",showWarnings = F)
+dir.create("./Figures/",showWarnings = F)
+dir.create("./Figures/SI",showWarnings = F)
 
 
 #empirical data 
@@ -180,8 +163,8 @@ Fig1=ggarrange(ggarrange(ggplot()+theme_void(),p1,ggplot()+theme_void(),ncol=3,w
                ggarrange(ggplot()+theme_void(),p3,ggplot()+theme_void(),ncol=3,widths=c(.05,1,.05)),
                nrow=3,labels = LETTERS[1:3],font.label = list(size=20))
 
-ggsave("../Figures/Fig1.pdf",Fig1,width = 9,height = 12)
-png("../Figures/Fig1.png",Fig1,width = 9,height = 12)
+ggsave("./Figures/Fig1.pdf",Fig1,width = 9,height = 12)
+png("./Figures/Fig1.png",Fig1,width = 9,height = 12)
 
 
 ## >> Fig PCA for the 3 type of metrics ----
@@ -208,7 +191,7 @@ p1=pca_metrics=fviz_pca_ind(res.pca, geom.ind = "point",
 
 km.res = kmeans(res.pca$ind$coord, 2, nstart = 9)
 Kmeans_table=table(km.res$cluster,data_empiric$Category)
-write.table(Kmeans_table,"../Figures/Kmeans_globalmetrics.csv",sep=";")
+write.table(Kmeans_table,"./Figures/Kmeans_globalmetrics.csv",sep=";")
 chisq.test(Kmeans_table,simulate.p.value = T)
 
 
@@ -237,7 +220,7 @@ p2=fviz_pca_ind(res.pca, geom.ind = "point",
 
 km.res = kmeans(res.pca$ind$coord, 2, nstart = 9)
 Kmeans_table=table(km.res$cluster,data_empiric$Category)
-write.table(Kmeans_table,"../Figures/Kmeans_Laplacian.csv",sep=";")
+write.table(Kmeans_table,"./Figures/Kmeans_Laplacian.csv",sep=";")
 
 chisq.test(Kmeans_table,simulate.p.value = T)
 
@@ -263,7 +246,7 @@ p3=fviz_pca_ind(res.pca, geom.ind = "point",
                                      legend.text = element_text(size=14))
 km.res = kmeans(res.pca$ind$coord, 2, nstart = 9)
 Kmeans_table=table(km.res$cluster,data_empiric$Category)
-write.table(Kmeans_table,"../Figures/Kmeans_Motifs.csv",sep=";")
+write.table(Kmeans_table,"./Figures/Kmeans_Motifs.csv",sep=";")
 chisq.test(Kmeans_table)
 
 Fig2=ggarrange(p1+theme(legend.position = "none")+ggtitle("Global metrics")+theme(plot.title = element_text(size=18)),
@@ -271,7 +254,7 @@ Fig2=ggarrange(p1+theme(legend.position = "none")+ggtitle("Global metrics")+them
                p3+labs(color="",fill="",shape="")+ggtitle("Motifs frequency")+theme(plot.title = element_text(size=18))+
                  guides(color = guide_legend(override.aes = list(size = 4)),shape="none"),
                nrow=3,labels = LETTERS[1:3],font.label = list(size=20))
-ggsave("../Figures/Fig2.pdf",Fig2,width = 7,height = 12)
+ggsave("./Figures/Fig2.pdf",Fig2,width = 7,height = 12)
 
 
 
@@ -332,9 +315,9 @@ for (b in sample(1:10000,nb_tours)){
 
 confiance=data.frame(percentage=percentage_classif/presence,category=data_empiric$Category,type=data_empiric$Type)
 
-write.table(confiance,"../Figures/Data/data_Table_1.csv",sep=";")
+write.table(confiance,"./Figures/Data/data_Table_1.csv",sep=";")
 
-confiance=read.table("../Figures/Data/data_Table_1.csv",sep=";")
+confiance=read.table("./Figures/Data/data_Table_1.csv",sep=";")
 
 confiance$percentage=confiance$percentage*100
 confiance=confiance[order(confiance$category,-confiance$percentage),]
@@ -377,7 +360,7 @@ results = table(confiance$category,confiance$classif_final)
 
 confiance$type=data_empiric$Type[as.numeric(rownames(confiance))]
 Table_1=table(confiance$type,confiance$classif_final)
-write.table(Table_1,"../Figures/Table_1.csv",sep=";")
+write.table(Table_1,"./Figures/Table_1.csv",sep=";")
 
 
 
@@ -466,12 +449,12 @@ panel_e=ggplot(data_empiric,aes(x=Type,y=Sum,fill=`Nature of the network`,col=`N
 
 panel_abc=ggarrange(panel_a,panel_b,panel_c,panel_d,nrow =4,labels=LETTERS[1:4])
 p=ggarrange(panel_abc,panel_e,nrow =2,heights = c(1.85, 1),labels=c("",LETTERS[5]))
-ggsave("../Figures/SI/Global_metric_empirical_N.pdf", p, height = 29.7/1.3, width = 17, units = "cm")
+ggsave("./Figures/SI/Global_metric_empirical_N.pdf", p, height = 29.7/1.3, width = 17, units = "cm")
 
 
 ## >> Txample of Laplacian density ----
 
-pdf("../Figures/SI/Example_Laplacian_density.pdf",width = 5,height = 5)
+pdf("./Figures/SI/Example_Laplacian_density.pdf",width = 5,height = 5)
 
 #A : example network
 
@@ -617,7 +600,7 @@ p4=ggplot(data_2[which(as.numeric(data_2$Eigen)>0.75),], aes(x=as.character(Eige
 
 p=ggarrange(p1,p2,p3,p4,nrow=4)
 
-ggsave("../Figures/SI/Spectral_density_type_ecology.pdf",p,width = 10,height = 16)
+ggsave("./Figures/SI/Spectral_density_type_ecology.pdf",p,width = 10,height = 16)
 
 
 ## >> Totifs difference ecology and type of interaction ----
@@ -714,11 +697,11 @@ panel_C= ggplot(data_2, aes(x=Var2, y=value, fill=Type)) +
 
 
 
-pdf("../Figures/SI/Significant_motifs_btw_networks_AB.pdf",width = 8,height = 5)
+pdf("./Figures/SI/Significant_motifs_btw_networks_AB.pdf",width = 8,height = 5)
 print(panel_A)
 print(panel_B)
 dev.off()
-pdf("../Figures/SI/Significant_motifs_btw_networks_C.pdf",width = 12,height = 5)
+pdf("./Figures/SI/Significant_motifs_btw_networks_C.pdf",width = 12,height = 5)
 print(panel_C)
 dev.off()
 
@@ -736,7 +719,7 @@ u=1
 for (i in c("Global_metrics","Laplacian","Motifs")){ #Fig number
   set.seed(123)
   
-  pdf(paste0("../Figures/SI/Fig_PCA_Simu_empirical_",i,".pdf"),height = 4,width = 7)
+  pdf(paste0("./Figures/SI/Fig_PCA_Simu_empirical_",i,".pdf"),height = 4,width = 7)
   
   data_BipartiteEvol=save_bipartite[sample(1:nrow(save_bipartite),size=300),combination[[u]]]
   data_empiric=save[,combination[[u]]]
@@ -775,7 +758,7 @@ for (i in c("Global_metrics","Laplacian","Motifs")){ #Fig number
   Kmeans_table=table(km.res$cluster,data_all$Category) #table of CAH
   print(chisq.test(Kmeans_table,simulate.p.value = T))
   
-  pdf(paste0("../Figures/SI/Fig_PCA_ecology_",i,".pdf"),height = 4,width = 7)
+  pdf(paste0("./Figures/SI/Fig_PCA_ecology_",i,".pdf"),height = 4,width = 7)
   
   res.pca=PCA(data_empiric[,3:(dim(data_empiric)[2])], scale.unit = TRUE, ncp = 2,  graph=F)
   
@@ -815,7 +798,7 @@ for (i in c("Global_metrics","Laplacian","Motifs")){ #Fig number
   print(mean(classif_out_cluster[c(1,6,7,8,9)]*apply(Kmeans_table, 2, sum)[c(1,6,7,8,9)])) #moyenne pondérée mutualistic
   print(mean(classif_out_cluster[c(2,3,4,5)]*apply(Kmeans_table, 2, sum)[c(2:5)])) #moyenne pondérée antagonistic
   
-  write.table(Kmeans_table,paste0("../Figures/SI/Table_PCA_kmeans_ecology_",i,".csv"),sep=";")
+  write.table(Kmeans_table,paste0("./Figures/SI/Table_PCA_kmeans_ecology_",i,".csv"),sep=";")
   
   
   u=u+1
@@ -916,7 +899,7 @@ p=ggplot(figure_data)+
   geom_point(aes(x=`Hidden layer size`,y=value))+theme_minimal()+
   scale_color_manual(values=c("black",'#8fd175','#DECF3F'))+labs(y="",color="")
 
-ggsave(p,filename = "../Figures/SI/Overfitting.pdf",width = 9,height = 4)
+ggsave(p,filename = "./Figures/SI/Overfitting.pdf",width = 9,height = 4)
 
 
 
@@ -1042,7 +1025,7 @@ results_NN=tibble(Antagonist_controlled=AA_ecology_controled,Mutualist_controlle
 results_NN=melt(results_NN,id.vars = 3)
 
 
-pdf("../Figures/SI/Controlling_number_ecology.pdf",width = 7,height = 4)
+pdf("./Figures/SI/Controlling_number_ecology.pdf",width = 7,height = 4)
 print(ggplot(results_NN)+geom_point(aes(x=N_max_training,y=value,color=variable),size=2)+theme_classic()+
         geom_line(aes(x=N_max_training,y=value,color=variable,linetype=variable),lwd=1)+
         labs(x="Maximal number of network per type of ecology",y="Classification accuracy",color="",linetype="")+ylim(0,100)+
@@ -1055,7 +1038,7 @@ print(ggplot(results_NN)+geom_point(aes(x=N_max_training,y=value,color=variable)
 )
 dev.off()
 
-write.table(results_NN,"../Figures/SI/Controlling_number_ecology.csv",sep=";")
+write.table(results_NN,"./Figures/SI/Controlling_number_ecology.csv",sep=";")
 
 
 
@@ -1173,7 +1156,7 @@ results_NN=tibble(Antagonist_controlled=AA_ecology_controled,Mutualist_controlle
 results_NN=melt(results_NN,id.vars = 3)
 
 
-pdf("../Figures/SI/Asymetry_mutua_anta.pdf",width = 7,height = 4)
+pdf("./Figures/SI/Asymetry_mutua_anta.pdf",width = 7,height = 4)
 print(ggplot(results_NN)+geom_point(aes(x=N_max_training,y=value,color=variable),size=2)+theme_classic()+
         geom_line(aes(x=N_max_training,y=value,color=variable,linetype=variable),lwd=1)+
         labs(x="Number of networks in the training set",y="Classification accuracy",color="",linetype="")+ylim(0,100)+
@@ -1183,7 +1166,7 @@ print(ggplot(results_NN)+geom_point(aes(x=N_max_training,y=value,color=variable)
 )
 dev.off()
 
-write.table(results_NN,"../Figures/SI/Asymetry_mutua_anta_data.csv",sep=";")
+write.table(results_NN,"./Figures/SI/Asymetry_mutua_anta_data.csv",sep=";")
 
 
 
@@ -1256,7 +1239,7 @@ panel_e=qplot(Nature, Sum, data = info_data, fill=Color,alpha=.8)+geom_violin(tr
 panel_abcd=ggarrange(panel_a,panel_b,panel_c,panel_d,nrow =4,labels=LETTERS[1:4])
 p=ggarrange(panel_abcd,panel_e,nrow =2,heights = c(1, .285),labels=c("",LETTERS[5]))
 
-ggsave("../Figures/SI/Global_metrics_simu_empirical.pdf", p, height = 27.7, width = 19, units = "cm")
+ggsave("./Figures/SI/Global_metrics_simu_empirical.pdf", p, height = 27.7, width = 19, units = "cm")
 
 
 #Test associated with the figures: 
@@ -1344,7 +1327,7 @@ p4= ggplot(data_2[which(data_2$Var2 %in% as.factor(paste0("Motif_",30:44))),], a
 
 
 p=ggarrange(p1,p2,p3,p4,nrow = 4, labels = LETTERS[1:4])
-ggsave("../Figures/SI/Motifs_frequency_empiric_simulations.pdf",p,width = 12,height = 14)
+ggsave("./Figures/SI/Motifs_frequency_empiric_simulations.pdf",p,width = 12,height = 14)
 
 
 ## >> Tifference in spectral density between simulated and empirical networks ----
@@ -1417,7 +1400,7 @@ p4=ggplot(filter(data_2,as.numeric(as.character(Eigen))>0.75), aes(x=as.factor(E
 
 p=ggarrange(p1,p2,p3,p4,nrow=4)
 
-ggsave("../Figures/SI/Spectral_density_simulations_empirical.pdf",p,width = 10,height = 16)
+ggsave("./Figures/SI/Spectral_density_simulations_empirical.pdf",p,width = 10,height = 16)
 
 
 
@@ -1482,7 +1465,7 @@ table_=data.frame(Dichotomy_corrected=c(test_n[2],test_c[2],test_m[2],test_d[2],
                     Dichotomy_uncorrected=c(test_n[3],test_c[3],test_m[3],test_d[3],test_s[3]));rownames(Table_S7)=c("Nestedness","Connectance","Modularity","Diff","Sum")
 
 
-write.table(table_,"../Figures/SI/AIC_global_metrics.csv",sep=";")
+write.table(table_,"./Figures/SI/AIC_global_metrics.csv",sep=";")
 
 
 
@@ -1542,7 +1525,7 @@ for (m in combination){
 }
 
 results_probit=data.frame(Antagonist=AA,Mutualist=MM,F1=F1_score,method=method)
-write.table(results_probit,"../Figures/SI/results_probit.csv",sep=";")
+write.table(results_probit,"./Figures/SI/results_probit.csv",sep=";")
 
 
 # >>> Lasso classification
@@ -1613,7 +1596,7 @@ for (m in combination){
 }
 
 results_lasso=data.frame(Antagonist=AA,Mutualist=MM,F1=F1_score,method=method)
-write.table(results_lasso,"../Figures/SI/results_lasso.csv",sep=";")
+write.table(results_lasso,"./Figures/SI/results_lasso.csv",sep=";")
 
 
 
@@ -1680,7 +1663,7 @@ for (m in combination[-1]){
 }
 
 results_NN=data.frame(Antagonist=AA,Mutualist=MM,F1=F1_score,method=method)
-write.table(results_NN,"../Figures/SI/results_NN.csv",sep=";")
+write.table(results_NN,"./Figures/SI/results_NN.csv",sep=";")
 
 
 
@@ -1766,7 +1749,7 @@ for (v in c("BipartiteEvol_simulations")){
   results_probit=data.frame(Antagonist_topo=AA_topo,Mutualist_topo=MM_topo,Antagonist_emp=AA_emp,Mutualist_emp=MM_emp,method=method)
   print(results_probit)
   write.table(results_probit,
-              paste0("../Figures/SI/results_probit_",v,".csv"),sep=";")
+              paste0("./Figures/SI/results_probit_",v,".csv"),sep=";")
   
 }
 
@@ -1866,7 +1849,7 @@ for (v in c("BipartiteEvol_simulations")){
   
   results_lasso=data.frame(Antagonist_topo=AA_topo,Mutualist_topo=MM_topo,Antagonist_emp=AA_emp,Mutualist_emp=MM_emp,method=method)
   write.table(results_lasso,
-              paste0("../Figures/SI/results_lasso_",v,".csv"),sep=";")
+              paste0("./Figures/SI/results_lasso_",v,".csv"),sep=";")
   
 }
 
@@ -1966,7 +1949,7 @@ for (v in c("BipartiteEvol_simulations")){
   results_NN=data.frame(Antagonist_topo=AA_topo,Mutualist_topo=MM_topo,Antagonist_emp=AA_emp,Mutualist_emp=MM_emp,method=method)
   print(results_NN)
   write.table(results_NN,
-              paste0("../Figures/SI/results_NN_",v,".csv"),sep=";")
+              paste0("./Figures/SI/results_NN_",v,".csv"),sep=";")
   
 }
 
@@ -2029,7 +2012,7 @@ for (p in names(table(value2$Type))){
 }
 results_S5A=data.frame(aa=AA,mm=MM,name=Name)
 
-write.table(results_S5A,"../Figures/SI/Table_without_ecology.csv",sep=";")
+write.table(results_S5A,"./Figures/SI/Table_without_ecology.csv",sep=";")
 
 
 
@@ -2089,11 +2072,11 @@ for (p in names(table(save$Type))[-1]){
   n=n+1
 }
 results=data.frame('Classif_accuracy'=classif_accuracy,name=name)
-write.table(results,"../Figures/SI/Table_excluded_network.csv",sep=";")
+write.table(results,"./Figures/SI/Table_excluded_network.csv",sep=";")
 
 #Part 2: Classification accuracy with all the networks in the training
 
-original_classif=read.table("../Figures/data_Table_1.csv",sep=";")
+original_classif=read.table("./Figures/data_Table_1.csv",sep=";")
 complementary=unlist(lapply(original_classif$category,function(x){
   ifelse(x=="Mutualistic","Antagonistic","Mutualistic")
 }))
@@ -2113,7 +2096,7 @@ for (i in 1:nrow(tab)){
 
 results=data.frame('Classification_accuracy'=original_result,name=rownames(tab))
 
-write.table(results,"../Figures/SI/Table_total_robustness_fig.csv",sep=";")
+write.table(results,"./Figures/SI/Table_total_robustness_fig.csv",sep=";")
 
 
 
@@ -2183,7 +2166,7 @@ lasso_result=data.frame(MM=paste0(mean(MM),"+/-",sd(MM)),
                         MA=paste0(100-mean(MM),"+/-",sd(MM)),
                         AM=paste0(100-mean(AA),"+/-",sd(AA)))
 
-write.table(lasso_result,"../Figures/SI/Overfitting_Lasso.csv",sep=";")
+write.table(lasso_result,"./Figures/SI/Overfitting_Lasso.csv",sep=";")
 
 # testing overfitting with logit regression
 
@@ -2234,7 +2217,7 @@ probit_result=data.frame(MM=paste0(mean(MM),"+/-",sd(MM)),
                          MA=paste0(100-mean(MM),"+/-",sd(MM)),
                          AM=paste0(100-mean(AA),"+/-",sd(AA)))
 
-write.table(probit_result,"../Figures/SI/Overfitting_probit.csv",sep=";")
+write.table(probit_result,"./Figures/SI/Overfitting_probit.csv",sep=";")
 
 
 
@@ -2245,9 +2228,9 @@ write.table(probit_result,"../Figures/SI/Overfitting_probit.csv",sep=";")
 
 
 data_empiric=data_empiric[-which(data_empiric$Type %in% c("Anemone-Fish","Plant-Ant")),]
-write.table(as.data.frame(TukeyHSD(aov(Connectance ~ Type, data=data_empiric))$Type),"../Figures/SI/Post_hoc_Connectance_type_ecology.csv",sep=";")
-write.table(as.data.frame(TukeyHSD(aov(Nestedness ~ Type, data=data_empiric))$Type),"../Figures/SI/Post_hoc_Nestedness_type_ecology.csv",sep=";")
-write.table(as.data.frame(TukeyHSD(aov(Modularity ~ Type, data=data_empiric))$Type),"../Figures/SI/Post_hoc_Modularity_type_ecology.csv",sep=";")
+write.table(as.data.frame(TukeyHSD(aov(Connectance ~ Type, data=data_empiric))$Type),"./Figures/SI/Post_hoc_Connectance_type_ecology.csv",sep=";")
+write.table(as.data.frame(TukeyHSD(aov(Nestedness ~ Type, data=data_empiric))$Type),"./Figures/SI/Post_hoc_Nestedness_type_ecology.csv",sep=";")
+write.table(as.data.frame(TukeyHSD(aov(Modularity ~ Type, data=data_empiric))$Type),"./Figures/SI/Post_hoc_Modularity_type_ecology.csv",sep=";")
 
 
 
@@ -2331,7 +2314,7 @@ final_results_BipartiteEvol=data.frame(Simulations=rbind(paste0("Classification 
                          Empiric=rbind(paste0("Classification of Mutualistic : ",mean(MM)," +/- ",sd(MM)), 
                                        paste0('Classification of Antagonistic : ',mean(AA)," +/- ",sd(AA))))
 
-write.table(final_results_BipartiteEvol,"../Figures/SI/Classif_with_bipartiteevol.csv",sep=";")
+write.table(final_results_BipartiteEvol,"./Figures/SI/Classif_with_bipartiteevol.csv",sep=";")
 
 
 #*********************************************************************#

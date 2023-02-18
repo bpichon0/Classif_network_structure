@@ -1,3 +1,26 @@
+
+#packages, please make sure that there packages are well installed
+library(RPANDA)
+library(tidyverse)
+library(FactoMineR) 
+library(factoextra)
+library(MLmetrics)
+library(corrplot)
+library(emmeans)
+library(matrixStats)
+library(maxnodf)
+library(bipartite)
+library(reshape2)
+library(neuralnet)
+library(lmerTest)
+library(lme4)
+library(car)
+library(ggpubr)
+library(igraph)
+library(bmotif)
+
+
+
 #Fonction####
 #Spectral density calculation
 spectR_network_abs <-
@@ -137,18 +160,6 @@ dens_network <- function(x,
   )
 }
 
-plot_spectR_network <- function (spectR, bw = bw.ucv) {
-  if (!inherits(spectR, "spectR"))
-    stop("object \"spectR\" is not of class \"spectR\"")
-  m = abs(spectR$eigenvalues)
-  d <- dens_network(m, bw = bw)
-  dint <- integr(d$x, d$y)
-  dsc <- (d$y / dint)
-  plot(d$x, dsc, type = "l", ann = F,ylim=c(0,4.5),xlim = c(0,2))
-  mtext("Density",2,2) 
-  mtext("Eigen values", 1, 2)
-  
-}
 
  
 #NESTEDNESS INDICE
@@ -397,3 +408,32 @@ JSDtree_network <- function (networkEigen, names_network) {
   return(JSD)
 }
 
+
+
+
+Plot_motif_frequency=function(f_motif){
+  
+  print(ggplot(f_motif)+
+    geom_point(aes(x=motif,y=normalise_sum,color=as.factor(nodes)),shape=8)+
+    theme_classic()+
+    theme(legend.position = "bottom")+
+    labs(x="Motif id",y=expression(sqrt("Frequency motif")),color="# of species \n in the motif"))
+  
+}
+
+
+
+plot_spectR_network <- function (spectR, bw = bw.ucv) {
+  if (!inherits(spectR, "spectR"))
+    stop("object \"spectR\" is not of class \"spectR\"")
+  m = abs(spectR$eigenvalues)
+  d <- dens_network(m, bw = bw)
+  dint <- integr(d$x, d$y)
+  dsc <- (d$y / dint)
+  d2=tibble(eigen=d$x,dens_eigen=dsc)
+  print(ggplot(d2)+
+          geom_line(aes(x=eigen,y=dens_eigen),color="blue")+
+          theme_classic()+
+          labs(x="Eigenvalues",y="Density of eigenvalues"))
+  
+}
