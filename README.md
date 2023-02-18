@@ -8,11 +8,21 @@ All the code was made on R (*v4.1.0*).
 
 Here is the different steps to reproduce the figures:
 
+## `Data`
+
+The folder `Data` contains the metrics (global metrics, spectral density and motifs frequency) of both empirical and simulated networks (`data_BD.csv` and `data_BipartiteEvol.csv` respectively).
+The list of empirical networks used for this study is available as a RData: `network_BD.RData`.
+
+
+
+
 
 ## `Replicating the figures`
 
 The file `Make_figs.R` contains the different steps to replicate all analysis in the paper. It is organized into different chunks of code, each doing a separate figure. 
 **Make sure** that you have all the packages needed to perform the analyses (see `Functions_network_inference.R` for the list).
+
+
 
 
 
@@ -52,7 +62,7 @@ plot(g,layout=layout_as_bipartite, arrow.mode=0,
 </p>
 
 <p align="center">
-    <b>Figure 2: Structure of plant-pollinator network.</b>
+    <b>Figure 2: Structure of the plant-pollinator network.</b>
 </p>
 
 
@@ -72,7 +82,7 @@ plot_spectR_network(spectR = spectre,bw = band)
 
 
 <p align="center">
-    <img src="https://github.com/bpichon0/Classif_network_structure/blob/master/Example/spectral_density.svg" width="600">
+    <img src="https://github.com/bpichon0/Classif_network_structure/blob/master/Example/spectral_density.svg" width="500">
 </p>
 
 <p align="center">
