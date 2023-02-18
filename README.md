@@ -72,7 +72,7 @@ plot_spectR_network(spectR = spectre,bw = band)
 
 
 <p align="center">
-    <img src="https://github.com/bpichon0/Scripts_drylands_shift/blob/master/Example/spectral_density.svg" width="600">
+    <img src="https://github.com/bpichon0/Classif_network_structure/blob/master/Example/spectral_density.svg" width="600">
 </p>
 
 <p align="center">
@@ -91,7 +91,7 @@ Plot_motif_frequency(motif_freq) #we normalize each motif occurrence by the tota
 
 
 <p align="center">
-    <img src="https://github.com/bpichon0/Scripts_drylands_shift/blob/master/Example/Motif_frequency.svg" width="600">
+    <img src="https://github.com/bpichon0/Classif_network_structure/blob/master/Example/Motif_frequency.svg" width="600">
 </p>
 
 <p align="center">
