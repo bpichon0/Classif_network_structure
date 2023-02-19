@@ -417,7 +417,7 @@ Plot_motif_frequency=function(f_motif){
     geom_point(aes(x=motif,y=normalise_sum,color=as.factor(nodes)),shape=8,size=3)+
     theme_classic()+
     theme(legend.position = "bottom")+
-    labs(x="Motif id",y=expression(sqrt("Frequency motif")),color="# of species \n in the motif"))
+    labs(x="Motif id",y=expression(sqrt("Frequency motif")),color="# of species involved"))
   
 }
 

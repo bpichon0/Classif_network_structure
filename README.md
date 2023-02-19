@@ -44,7 +44,7 @@ We take as an example a plant-pollinator network:
 
 ```R
 
-include("Fonctions_network_inference.R") #loading the functions
+source("Fonctions_network_inference.R") #loading the functions
 
 network=read.table("./Example/A_HP_001.csv",sep=",")>0 #bipartite unweighted network
 
@@ -94,7 +94,7 @@ In addition, we can extract the motif composition of this network using the *mco
 
 
 ```R
-motif_freq=mcount(six_node = T, normalisation=T, mean_weight=F, standard_dev=F)
+motif_freq=mcount(matrix(as.numeric(network),10,18),six_node = T, normalisation=T, mean_weight=F, standard_dev=F)
 Plot_motif_frequency(motif_freq) #we normalize each motif occurrence by the total count of motifs
 ```
 
