@@ -18,7 +18,7 @@ library(car)
 library(ggpubr)
 library(igraph)
 library(bmotif)
-
+library(rstatix)
 
 
 #Fonction####

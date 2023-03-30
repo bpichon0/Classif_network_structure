@@ -105,7 +105,7 @@ Plot_motif_frequency(motif_freq) #we normalize each motif occurrence by the tota
 </p>
 
 <p align="center">
-    <b>Figure 3: Motif composition in the plant-pollinator network (frequency sqrt transformed). </b>
+    <b>Figure 4: Motif composition in the plant-pollinator network (frequency sqrt transformed). </b>
 </p>
 
 

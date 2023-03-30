@@ -9,7 +9,7 @@ dir.create("./Figures/SI",showWarnings = F)
 
 #empirical data 
 
-load("./network_BD.RData")
+load("./Data/network_BD.RData")
 data_empiric = read.csv("./Data/data_BD.csv",sep=";")
 data_empiric$Category=as.character(data_empiric$Category)
 data_empiric$Category[which(data_empiric$Category=="Empirical antagonistic")]="Antagonistic"
@@ -20,7 +20,7 @@ save=data_empiric
 
 #Data from simulations
 
-save_bipartite=read.csv("../Data/bipartite_sim/Data/data_BipartiteEvol.csv",sep=";")
+save_bipartite=read.csv("./Data/data_BipartiteEvol.csv",sep=";")
 
 combination=list(c(1:3,4,5,106,107), # global metrics
                  c(1,2,108:151), # motifs
@@ -50,26 +50,47 @@ name_combination=list("global metrics",
 
 #First global metrics
 
-data_empiric=save[order(data_empiric$Category),c(1:2,5,106,107)] 
-data_empiric$Number=as.character(1:343)
-global_metric_empiric=melt(data_empiric)
-colnames(global_metric_empiric)=c("Category","Type","Number","Variable","Value")
+d_melt=save[order(data_empiric$Category),c(1:2,5,106,107)]%>%
+  add_column(., Number=1:343)%>%
+  melt(.,id.vars=c("Category","Type"))%>%
+  mutate(., Category=recode_factor(Category,"Mutualistic"="Mutualistic networks","Antagonistic"="Antagonistic networks" ))%>%
+  mutate(., variable=recode_factor(variable,"Number"="# of species"))
 
-p1=ggplot(global_metric_empiric%>%
-               mutate(., Category=recode_factor(Category,"Mutualistic"="Mutualistic networks","Antagonistic"="Antagonistic networks" )),
-             aes(x=Variable, y=Value,fill=Variable)) + xlab("")+ylab("log(value)")+
-  scale_y_log10()+facet_wrap( ~ Category, ncol = 2) +
-  geom_line(aes(group=Number),alpha = 0.5, colour = "darkgrey") +
-  geom_violin(alpha=0.8,trim=T)+theme_minimal()+scale_fill_manual(values=c("#ba4a00","#d68910","#229954"))+
-  theme(legend.position="none")+
-  geom_boxplot(width=0.1,outlier.shape = NA,color="black")+
-  theme(panel.border = element_rect(colour = "black", fill=NA, size=1),
-        strip.text.x = element_text(colour = "black", size=12),
-        axis.title.x = element_text(size = 12),
-        axis.text.x = element_text(size = 11),
-        axis.text.y = element_text(size = 10),
-        axis.title.y = element_text(size = 12))
 
+#getting the test associated to each global metric
+d=tibble()
+for (i in 1:length(unique(d_melt$variable))){
+  d=rbind(d,tibble(Test=ifelse(wilcox.test(value~Category,data=filter(d_melt, variable==unique(d_melt$variable)[i]))$p.value<0.001,"***","n.s."),
+                   variable=unique(d_melt$variable)[i]))
+}
+
+for (i in 1:4){
+  assign(paste0("p_",i),
+         
+         ggplot(d_melt%>%filter(., variable==unique(.$variable)[i]))+
+           geom_violin(aes(x=Category, y=value,fill=Category),alpha=0.8,trim=T)+
+           geom_boxplot(aes(x=Category, y=value,fill=Category),width=0.1,outlier.shape = NA,color="black")+
+           geom_line(data=tibble(y=rep(c(.75,6,.75,350)[i],2),x=c(1,2)),aes(x=x,y=y),color="black")+
+           geom_text(data=tibble(y=c(.8,6.5,.8,370)[i],x=c(1.5),text=d$Test[i]),aes(x = x,y=y,label=text),size=4)+
+           labs(x="",y="Value",color="",fill="")+
+           theme_classic()+
+           theme(text = element_text(family = "NewCenturySchoolbook"))+
+           scale_fill_manual(values=c('#DECF3F','olivedrab3'))+
+           theme(legend.position="bottom")+
+           theme(strip.text.x = element_text(colour = "black", size=12),
+                 axis.text.x = element_blank(),
+                 axis.title.x=element_blank(),
+                 axis.ticks.x = element_blank(),
+                 axis.text.y = element_text(size = 10),
+                 axis.title.y = element_text(size = 12))+
+           ggtitle(unique(d_melt$variable)[i])
+         )  
+}
+
+p1=ggarrange(p_1,p_2+theme(axis.title.y = element_blank()),
+             p_3+theme(axis.title.y = element_blank()),
+             p_4+theme(axis.title.y = element_blank()),
+             ncol = 4,common.legend = T,legend = "none")
 
 
 
@@ -108,10 +129,11 @@ data_2 = data_2[which(data_2$Var2 %in%  paste0("Var",unique(Dat$Eig))),]
 data_2$Var2=round(seq(0,1,length.out=100)[as.numeric(str_remove(data_2$Var2,pattern = "Var"))],3)
 p2=ggplot(data_2, aes(x=as.factor(Var2), y=sqrt(value), fill=Category)) + 
   geom_boxplot(outlier.size = 0) + theme_classic()+# theme(axis.title.x=element_blank(),axis.text.x=element_blank(), axis.ticks.x=element_blank())+
-  xlab("Eigenvalues") +ylab(expression(sqrt('Density of eigen values')))+
+  xlab("Eigenvalues") +ylab(expression(sqrt('Density of eigenvalues')))+
   scale_fill_manual(values=c('#DECF3F','olivedrab3'))+ylim(0,2)+
-  theme(legend.position = "bottom",legend.text = element_text(size=14))+labs(fill="",color="")+
-  theme(axis.text.x = element_text(angle = 60, hjust = 1,size=10)) 
+  labs(fill="",color="")+
+  theme(axis.text.x = element_text(angle = 60, hjust = 1,size=12),
+        axis.title = element_text(size=13)) 
 
 
 
@@ -119,52 +141,48 @@ p2=ggplot(data_2, aes(x=as.factor(Var2), y=sqrt(value), fill=Category)) +
 #lastly: motifs
 
 count_motif=save[,c(1,2,108:151)]
-
-Motif_name=NULL;freq=NULL;Nature=NULL;Dat=NULL
-
+Dat=tibble()
 
 for (i in 3:ncol(count_motif)){
   data_mixed_model=count_motif[,c(1,2,i)]
   colnames(data_mixed_model)[3]="Motif"
   if (wilcox.test(data_mixed_model$Motif[which(data_mixed_model$Category=="Mutualistic")],
                   data_mixed_model$Motif[which(data_mixed_model$Category=="Antagonistic")])$p.value<0.01){ #we keep those that significantly differ using mixed effect models
-    
-    Motif_name=rbind(as.numeric(i-2),as.numeric(i-2)) #motif number starts at 1 and index at 3
-    freq=rbind(aggregate(x = count_motif[,i],by = list(count_motif$Category),FUN = mean)[2][2,],
-               aggregate(x = count_motif[,i],by = list(count_motif$Category),FUN = mean)[2][1,])
-    Nature=rbind("Mutualistic","Antagonistic")
-    Dat=rbind(Dat,cbind(as.numeric(Motif_name),as.numeric(freq),as.character(Nature)))
+    Dat=rbind(Dat,tibble(Motif=rep(as.numeric(i-2),2),
+                         Freq=c(aggregate(x = count_motif[,i],by = list(count_motif$Category),FUN = mean)[2][2,],
+                                                   aggregate(x = count_motif[,i],by = list(count_motif$Category),FUN = mean)[2][1,]),
+                         Nature=c("Mutualistic","Antagonistic")))
   }
 }
 
+data_2 = melt(as.matrix(count_motif[,3:ncol(count_motif)]))%>%
+  mutate(., value=sqrt(value))%>%
+  add_column(., Category=rep(count_motif$Category, ncol(count_motif)-2))%>%
+  filter(., Var2 %in% paste0("Motif_",unique(Dat$Motif)))%>%
+  mutate(., Var2=gsub("_"," ",Var2))%>%
+  mutate(., Category=recode_factor(Category,"Mutualistic"="Mutualistic networks","Antagonistic"="Antagonistic networks" ))%>%
+  add_column(., order=which(as.numeric(gsub("Motif","",.$Var2)) %in% sort(unique(as.numeric(gsub("Motif","",.$Var2))))))%>%
+  mutate(., Var2=fct_reorder(Var2, order))
 
-Dat=data.frame(Motif=as.numeric(Dat[,1]),Freq=as.numeric(Dat[,2]),Nature=as.character(Dat[,3]))
 
-data_2 = melt(as.matrix(count_motif[,3:ncol(count_motif)]))
-data_2$value=sqrt(data_2$value)
-data_2$Category = rep(count_motif$Category, ncol(count_motif)-2)
-
-data_2 = data_2[which(data_2$Var2 %in%  paste0("Motif_",unique(Dat$Motif))),]
-
-p3=ggplot(data_2%>%
-            mutate(., Category=recode_factor(Category,"Mutualistic"="Mutualistic networks","Antagonistic"="Antagonistic networks" )),
-          aes(x=reorder(Var2, -value), y=value, fill=Category,col=Category)) + 
+p3=ggplot(data_2,
+          aes(x=Var2, y=value, fill=Category,col=Category)) + 
   geom_boxplot(outlier.size = 0) + theme_classic() + 
   theme(axis.text.x = element_text(angle = 60, hjust = 1,size=10)) +
   xlab("") + ylab(expression(sqrt('Motif frequency')))+
   scale_fill_manual(values=c('#DECF3F','olivedrab3'))+
   scale_color_manual(values=c('black','black'))+
-  theme(legend.position = "bottom",legend.text = element_text(size=14))+labs(fill="",color="")
+  theme(legend.position = "bottom",legend.text = element_text(size=14),
+        axis.title = element_text(size=13),axis.text.x = element_text(size=12))+
+  labs(fill="",color="")
 
 
-
-Fig1=ggarrange(ggarrange(ggplot()+theme_void(),p1,ggplot()+theme_void(),ncol=3,widths = c(.1,1,.1)),
+Fig1=ggarrange(p1+theme(legend.position = "none"),
                p2+theme(legend.position = "none"),
-               ggarrange(ggplot()+theme_void(),p3,ggplot()+theme_void(),ncol=3,widths=c(.05,1,.05)),
-               nrow=3,labels = LETTERS[1:3],font.label = list(size=20))
+               p3,
+               nrow=3,labels = LETTERS[1:3],font.label = list(size=22.5),heights = c(1,1.5,1.5))
 
 ggsave("./Figures/Fig1.pdf",Fig1,width = 9,height = 12)
-png("./Figures/Fig1.png",Fig1,width = 9,height = 12)
 
 
 ## >> Fig PCA for the 3 type of metrics ----
@@ -389,7 +407,7 @@ write.table(Table_1,"./Figures/Table_1.csv",sep=";")
 
 
 
-## >> Tlobal metrics of empirical networks ----
+## >> Global metrics of empirical networks ----
 
 
 data_empiric=save[,c(1:5,106,107)]
@@ -452,7 +470,7 @@ p=ggarrange(panel_abc,panel_e,nrow =2,heights = c(1.85, 1),labels=c("",LETTERS[5
 ggsave("./Figures/SI/Global_metric_empirical_N.pdf", p, height = 29.7/1.3, width = 17, units = "cm")
 
 
-## >> Txample of Laplacian density ----
+## >> Example of Laplacian density ----
 
 pdf("./Figures/SI/Example_Laplacian_density.pdf",width = 5,height = 5)
 
@@ -537,7 +555,7 @@ dev.off()
 
 
 
-## >> Tifference in spectral density in empirical networks for the different types of ecology ----
+## >> Difference in spectral density in empirical networks for the different types of ecology ----
 
 
 data_laplacian=save[,c(2,6:105)]
@@ -572,14 +590,14 @@ colnames(data_2)=c("Network","Eigen","Density","Type")
 p1=ggplot(data_2[which(as.numeric(data_2$Eigen)<0.25),], aes(x=as.character(Eigen), y=Density, fill=Type)) + 
   geom_boxplot(outlier.size = 0) + theme_classic() + 
   theme(axis.text.x = element_text(angle = 60, hjust = 1,size=10)) +
-  xlab("") + ylab(expression(sqrt('Laplacian density')))+
+  xlab("") + ylab(expression(sqrt('Density of eigenvalues')))+
   scale_fill_manual(values=c("#C57700","#DECF3F","#0CA206","olivedrab3"))+
   theme(legend.position = "bottom",legend.text = element_text(size=14))+labs(fill="",color="")
 
 p2=ggplot(data_2[which(as.numeric(data_2$Eigen)>0.25 & as.numeric(data_2$Eigen)<.5),], aes(x=as.character(Eigen), y=Density, fill=Type)) + 
   geom_boxplot(outlier.size = 0) + theme_classic() + 
   theme(axis.text.x = element_text(angle = 60, hjust = 1,size=10)) +
-  xlab("") + ylab(expression(sqrt('Laplacian density')))+
+  xlab("") + ylab(expression(sqrt('Density of eigenvalues')))+
   scale_fill_manual(values=c("#C57700","#DECF3F","#0CA206","olivedrab3"))+
   theme(legend.position = "bottom",legend.text = element_text(size=14))+labs(fill="",color="")
 
@@ -587,23 +605,23 @@ p2=ggplot(data_2[which(as.numeric(data_2$Eigen)>0.25 & as.numeric(data_2$Eigen)<
 p3=ggplot(data_2[which(as.numeric(data_2$Eigen)>0.5 & as.numeric(data_2$Eigen)<.75),], aes(x=as.character(Eigen), y=Density, fill=Type)) + 
   geom_boxplot(outlier.size = 0) + theme_classic() + 
   theme(axis.text.x = element_text(angle = 60, hjust = 1,size=10)) +
-  xlab("") + ylab(expression(sqrt('Laplacian density')))+
+  xlab("") + ylab(expression(sqrt('Density of eigenvalues')))+
   scale_fill_manual(values=c("#C57700","#DECF3F","#0CA206","olivedrab3"))+
   theme(legend.position = "bottom",legend.text = element_text(size=14))+labs(fill="",color="")
 
 p4=ggplot(data_2[which(as.numeric(data_2$Eigen)>0.75),], aes(x=as.character(Eigen), y=Density, fill=Type)) + 
   geom_boxplot(outlier.size = 0) + theme_classic() + 
   theme(axis.text.x = element_text(angle = 60, hjust = 1,size=10)) +
-  xlab("") + ylab(expression(sqrt('Laplacian density')))+
+  xlab("") + ylab(expression(sqrt('Density of eigenvalues')))+
   scale_fill_manual(values=c("#C57700","#DECF3F","#0CA206","olivedrab3"))+
   theme(legend.position = "bottom",legend.text = element_text(size=14))+labs(fill="",color="")
 
-p=ggarrange(p1,p2,p3,p4,nrow=4)
+p=ggarrange(p1,p2,p3,p4,nrow=4,labels = LETTERS[1:4],font.label = list(size=25))
 
 ggsave("./Figures/SI/Spectral_density_type_ecology.pdf",p,width = 10,height = 16)
 
 
-## >> Totifs difference ecology and type of interaction ----
+## >> Motifs difference ecology and type of interaction ----
 
 count_motif=save[,c(1,2,108:151)]
 
@@ -706,7 +724,7 @@ print(panel_C)
 dev.off()
 
 
-## >> TCA & Kmeans on empirical alone + (empirical + simulated) network ----
+## >> PCA & Kmeans on empirical alone + (empirical + simulated) network ----
 
 set.seed(123)
 
@@ -904,7 +922,7 @@ ggsave(p,filename = "./Figures/SI/Overfitting.pdf",width = 9,height = 4)
 
 
 
-## >> Tontrolling for the number of ecologies (A) and the asymetry antagonist/mutualist in the training set ----
+## >> Controlling for the number of ecologies (A) and the asymetry antagonist/mutualist in the training set ----
 
 
 #Part A : controlling for the number of ecology in the training set
@@ -1171,7 +1189,7 @@ write.table(results_NN,"./Figures/SI/Asymetry_mutua_anta_data.csv",sep=";")
 
 
 
-## >> Tlobal metrics of empirical & simulated networks  ----
+## >> Global metrics of empirical & simulated networks  ----
 
 
 data_empiric=save[,c(1,3:5,106,107)]
@@ -1261,7 +1279,7 @@ wilcox.test(save$Diff,save_bipartite$Diff);mean(save_bipartite$Diff);mean(save$D
 
 #******************************************************************************#
 
-## >> Totifs frequencies between simulations and empirical networks ----
+## >> Motifs frequencies between simulations and empirical networks ----
 
 
 data_empiric=save[,c(1,2,108:151)]
@@ -1330,7 +1348,7 @@ p=ggarrange(p1,p2,p3,p4,nrow = 4, labels = LETTERS[1:4])
 ggsave("./Figures/SI/Motifs_frequency_empiric_simulations.pdf",p,width = 12,height = 14)
 
 
-## >> Tifference in spectral density between simulated and empirical networks ----
+## >> Difference in spectral density between simulated and empirical networks ----
 
 data_empiric=save[,c(1,2,6:105)]
 data_empiric$Category=as.character(data_empiric$Category)
@@ -1373,28 +1391,28 @@ colnames(data_2)=c("Network","Eigen","Density","Category")
 p1=ggplot(filter(data_2,as.numeric(as.character(Eigen))<0.25), aes(x=as.factor(Eigen), y=Density, fill=Category)) + 
   geom_boxplot(outlier.size = 0) + theme_classic() + 
   theme(axis.text.x = element_text(angle = 60, hjust = 1,size=10)) +
-  xlab("") + ylab(expression(sqrt('Laplacian density')))+
+  xlab("") + ylab(expression(sqrt('Density of eigenvalues')))+
   scale_fill_manual(values=c("#5b2c6f","#bb8fce","#DECF3F","olivedrab3","#1a5276","#5dade2"))+
   theme(legend.position = "none",legend.text = element_text(size=14))+labs(fill="",color="")
 
 p2=ggplot(filter(data_2,as.numeric(as.character(Eigen))>0.25 & as.numeric(as.character(Eigen))<0.5), aes(x=as.factor(Eigen), y=Density, fill=Category)) + 
   geom_boxplot(outlier.size = 0) + theme_classic() + 
   theme(axis.text.x = element_text(angle = 60, hjust = 1,size=10)) +
-  xlab("") + ylab(expression(sqrt('Laplacian density')))+
+  xlab("") + ylab(expression(sqrt('Density of eigenvalues')))+
   scale_fill_manual(values=c("#5b2c6f","#bb8fce","#DECF3F","olivedrab3","#1a5276","#5dade2"))+
   theme(legend.position = "none",legend.text = element_text(size=14))+labs(fill="",color="")
 
 p3=ggplot(filter(data_2,as.numeric(as.character(Eigen))<0.75 & as.numeric(as.character(Eigen))>0.5), aes(x=as.factor(Eigen), y=Density, fill=Category)) + 
   geom_boxplot(outlier.size = 0) + theme_classic() + 
   theme(axis.text.x = element_text(angle = 60, hjust = 1,size=10)) +
-  xlab("") + ylab(expression(sqrt('Laplacian density')))+
+  xlab("") + ylab(expression(sqrt('Density of eigenvalues')))+
   scale_fill_manual(values=c("#5b2c6f","#bb8fce","#DECF3F","olivedrab3","#1a5276","#5dade2"))+
   theme(legend.position = "none",legend.text = element_text(size=14))+labs(fill="",color="")
 
 p4=ggplot(filter(data_2,as.numeric(as.character(Eigen))>0.75), aes(x=as.factor(Eigen), y=Density, fill=Category)) + 
   geom_boxplot(outlier.size = 0) + theme_classic() + 
   theme(axis.text.x = element_text(angle = 60, hjust = 1,size=10)) +
-  xlab("") + ylab(expression(sqrt('Laplacian density')))+
+  xlab("") + ylab(expression(sqrt('Density of eigenvalues')))+
   scale_fill_manual(values=c("#5b2c6f","#bb8fce","#DECF3F","olivedrab3","#1a5276","#5dade2"))+
   theme(legend.position = "bottom",legend.text = element_text(size=14))+labs(fill="",color="")
 
@@ -2240,7 +2258,7 @@ write.table(as.data.frame(TukeyHSD(aov(Modularity ~ Type, data=data_empiric))$Ty
 
 #BIPARTITEEVOL SIMULATIONS
 
-data_BipartiteEvol=read.table("../Data/bipartite_sim/Data/data_BipartiteEvol.csv",sep=";")[,c(1,105:148)]
+data_BipartiteEvol=read.table("./Data/data_BipartiteEvol.csv",sep=";")[,c(1,105:148)]
 data_BipartiteEvol$Category=as.character(data_BipartiteEvol$Category)
 data_BipartiteEvol$Category[which(data_BipartiteEvol$Category=="BipartiteEvol Antagonistic")]="Antagonistic"
 data_BipartiteEvol$Category[which(data_BipartiteEvol$Category=="BipartiteEvol Antagonistic")]="Mutualistic"
@@ -2330,33 +2348,22 @@ data_empiric=save
 
 # Wilcox test for nestedness
 wilcox.test(data_empiric$Nestedness~data_empiric$Category, data=data_empiric) #test
-ggplot(data=data_empiric,aes(x=Category,y=Nestedness))+geom_boxplot()+theme_classic() #plot
-aggregate(data_empiric$Nestedness,by=list(data_empiric$Category),mean) #mean values
-aggregate(data_empiric$Nestedness,by=list(data_empiric$Category),sd) #sd values
 
 #Wilcox test for connectance
 wilcox.test(data_empiric$Connectance~data_empiric$Category, data=data_empiric)
-ggplot(data=data_empiric,aes(x=Category,y=Connectance))+geom_boxplot()+theme_classic()
-aggregate(data_empiric$Connectance,by=list(data_empiric$Category),mean)
-aggregate(data_empiric$Connectance,by=list(data_empiric$Category),sd)
+
 
 #Wilcox test for modularity
 wilcox.test(data_empiric$Modularity~data_empiric$Category, data=data_empiric)
-ggplot(data=data_empiric,aes(x=Category,y=Modularity))+geom_boxplot()+theme_classic()
-aggregate(data_empiric$Modularity,by=list(data_empiric$Category),mean)
-aggregate(data_empiric$Modularity,by=list(data_empiric$Category),sd)
+
 
 #Wilcox test for diff network size
 wilcox.test(data_empiric$Diff~data_empiric$Category, data=data_empiric)
-ggplot(data=data_empiric,aes(x=Category,y=Diff))+geom_boxplot()+theme_classic()
-aggregate(data_empiric$Diff,by=list(data_empiric$Category),mean)
-aggregate(data_empiric$Diff,by=list(data_empiric$Category),sd)
+
 
 #Wilcox test for sum network size
 wilcox.test(data_empiric$Sum~data_empiric$Category, data=data_empiric)
-ggplot(data=data_empiric,aes(x=Category,y=Sum))+geom_boxplot()+theme_classic()
-aggregate(data_empiric$Sum,by=list(data_empiric$Category),mean)
-aggregate(data_empiric$Sum,by=list(data_empiric$Category),sd)
+
 
 
 ## >> mixed effect models ----
@@ -2396,6 +2403,16 @@ Anova(mod_sum)
 ## >> Anova + post hoc test for global metrics x type of interaction ----
 
 #for connectance
-anov_connectance=lm(Connectance~Type, data=data_empiric) 
-emmeans(anov_connectance,pairwise~Type,adjust="bonferroni")
+anov_connectance=lm(Connectance~Type, data=data_empiric%>%
+                      filter(., Type != c("Anemone-Fish") & Type != c("Plant-Ant") )) 
+emmeans(anov_connectance,pairwise~Type,adjust="bonferroni")$contrasts
 
+#For modularity
+anov_mod=lm(Modularity~Type, data=data_empiric%>%
+                      filter(., Type != c("Anemone-Fish") & Type != c("Plant-Ant") )) 
+emmeans(anov_mod,pairwise~Type,adjust="bonferroni")
+
+#For nestedness
+anov_nested=lm(Nestedness~Type, data=data_empiric%>%
+              filter(., Type != c("Anemone-Fish") & Type != c("Plant-Ant") )) 
+emmeans(anov_nested,pairwise~Type,adjust="bonferroni")
