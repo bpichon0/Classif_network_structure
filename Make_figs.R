@@ -75,7 +75,7 @@ for (i in 1:4){
            labs(x="",y="Value",color="",fill="")+
            theme_classic()+
            theme(text = element_text(family = "NewCenturySchoolbook"))+
-           scale_fill_manual(values=c('#DECF3F','olivedrab3'))+
+           scale_fill_manual(values=c('olivedrab3','#DECF3F'))+
            theme(legend.position="bottom")+
            theme(strip.text.x = element_text(colour = "black", size=12),
                  axis.text.x = element_blank(),
@@ -125,8 +125,8 @@ data_2$value=sqrt(data_2$value)
 data_2$Category = rep(laplacian_data$Category, ncol(laplacian_data)-2)
 
 data_2 = data_2[which(data_2$Var2 %in%  paste0("Var",unique(Dat$Eig))),]
-
 data_2$Var2=round(seq(0,1,length.out=100)[as.numeric(str_remove(data_2$Var2,pattern = "Var"))],3)
+
 p2=ggplot(data_2, aes(x=as.factor(Var2), y=sqrt(value), fill=Category)) + 
   geom_boxplot(outlier.size = 0) + theme_classic()+# theme(axis.title.x=element_blank(),axis.text.x=element_blank(), axis.ticks.x=element_blank())+
   xlab("Eigenvalues") +ylab(expression(sqrt('Density of eigenvalues')))+
@@ -170,7 +170,7 @@ p3=ggplot(data_2,
   geom_boxplot(outlier.size = 0) + theme_classic() + 
   theme(axis.text.x = element_text(angle = 60, hjust = 1,size=10)) +
   xlab("") + ylab(expression(sqrt('Motif frequency')))+
-  scale_fill_manual(values=c('#DECF3F','olivedrab3'))+
+  scale_fill_manual(values=c('olivedrab3','#DECF3F'))+
   scale_color_manual(values=c('black','black'))+
   theme(legend.position = "bottom",legend.text = element_text(size=14),
         axis.title = element_text(size=13),axis.text.x = element_text(size=12))+
