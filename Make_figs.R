@@ -198,7 +198,7 @@ p1=pca_metrics=fviz_pca_ind(res.pca, geom.ind = "point",
                                axes=c(1,2), 
                                pointsize = 2, 
                                col.ind = data_empiric$Category,
-                               palette=c('#DECF3F','#8fd175'),
+                               palette=c('#8fd175','#DECF3F'),
                                addEllipses = F,
                                label = "var",
                                repel = T,mean.point = FALSE)+
@@ -207,7 +207,7 @@ p1=pca_metrics=fviz_pca_ind(res.pca, geom.ind = "point",
   ggtitle("") +theme_classic()+theme(legend.position = "bottom",
                                      legend.text = element_text(size=14))
 
-km.res = kmeans(res.pca$ind$coord, 2, nstart = 9)
+km.res = kmeans(res.pca$ind$coord, 2, nstart = 2)
 Kmeans_table=table(km.res$cluster,data_empiric$Category)
 write.table(Kmeans_table,"./Figures/Kmeans_globalmetrics.csv",sep=";")
 chisq.test(Kmeans_table,simulate.p.value = T)
@@ -224,7 +224,7 @@ p2=fviz_pca_ind(res.pca, geom.ind = "point",
              axes=c(1,2), 
              pointsize = 2, 
              col.ind = data_empiric$Category,
-             palette=c('#DECF3F','#8fd175'),
+             palette=c('#8fd175','#DECF3F'),
              #addEllipses = TRUE,ellipse.level = .95,
              label = "var",
              repel = T,mean.point = FALSE)+
@@ -254,7 +254,7 @@ p3=fviz_pca_ind(res.pca, geom.ind = "point",
                               axes=c(1,2), 
                               pointsize = 2, 
                               col.ind = data_empiric$Category,
-                              palette=c('#DECF3F','#8fd175'),
+                              palette=c('#8fd175','#DECF3F'),
                               addEllipses = F,
                               label = "var",
                               repel = T,mean.point = FALSE)+
