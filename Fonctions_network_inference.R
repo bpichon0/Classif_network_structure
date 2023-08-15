@@ -437,3 +437,20 @@ plot_spectR_network <- function (spectR, bw = bw.ucv) {
           labs(x="Eigenvalues",y="Density of eigenvalues"))
   
 }
+
+F1=function(x,type="mutua"){
+  
+  if (type=="mutua"){
+    Precis=x[3]/(sum(x[2:3]))
+    recall_=x[3]/(sum(x[3:4]))
+    f1=2*((Precis*recall_)/(Precis+recall_))
+  }else {
+    Precis=x[1]/(sum(x[c(1,4)]))
+    recall_=x[1]/(sum(x[1:2]))
+    f1=2*((Precis*recall_)/(Precis+recall_))
+  }
+
+  return(f1)
+}
+
+
