@@ -168,7 +168,7 @@ p3=ggplot(data_2,
           aes(x=Var2, y=value, fill=Category,col=Category)) + 
   geom_boxplot(outlier.size = 0) + theme_classic() + 
   theme(axis.text.x = element_text(angle = 60, hjust = 1,size=10)) +
-  xlab("") + ylab(expression(sqrt('Motif frequency')))+
+  xlab("") + ylab(expression(sqrt('Motif frequencies')))+
   scale_fill_manual(values=c('olivedrab3','#DECF3F'))+
   scale_color_manual(values=c('black','black'))+
   theme(legend.position = "bottom",legend.text = element_text(size=14),
@@ -268,7 +268,7 @@ chisq.test(Kmeans_table)
 
 Fig2=ggarrange(p1+theme(legend.position = "none")+ggtitle("Global metrics")+theme(plot.title = element_text(size=18)),
                p2+theme(legend.position = "none")+ggtitle("Laplacian graph")+theme(plot.title = element_text(size=18)),
-               p3+labs(color="",fill="",shape="")+ggtitle("Motifs frequency")+theme(plot.title = element_text(size=18))+
+               p3+labs(color="",fill="",shape="")+ggtitle("Motif frequencies")+theme(plot.title = element_text(size=18))+
                  guides(color = guide_legend(override.aes = list(size = 4)),shape="none"),
                nrow=3,labels = LETTERS[1:3],font.label = list(size=20))
 ggsave("./Figures/Fig2.pdf",Fig2,width = 7,height = 12)
@@ -406,7 +406,7 @@ write.table(Table_1,"./Figures/Table_1.csv",sep=";")
 
 
 
-## >> Global metrics of empirical networks ----
+## >> Global metrics of empirical networks (Fig. S1) ----
 
 
 data_empiric=save[,c(1:5,106,107)]
@@ -469,7 +469,7 @@ p=ggarrange(panel_abc,panel_e,nrow =2,heights = c(1.85, 1),labels=c("",LETTERS[5
 ggsave("./Figures/SI/Global_metric_empirical_N.pdf", p, height = 29.7/1.3, width = 17, units = "cm")
 
 
-## >> Example of Laplacian density ----
+## >> Example of Laplacian density (Fig. S2) ----
 
 pdf("./Figures/SI/Example_Laplacian_density.pdf",width = 5,height = 5)
 
@@ -554,7 +554,7 @@ dev.off()
 
 
 
-## >> Difference in spectral density in empirical networks for the different types of ecology ----
+## >> Difference in spectral density in empirical networks for the different types of ecology (Fig. S3) ----
 
 
 data_laplacian=save[,c(2,6:105)]
@@ -620,7 +620,7 @@ p=ggarrange(p1,p2,p3,p4,nrow=4,labels = LETTERS[1:4],font.label = list(size=25))
 ggsave("./Figures/SI/Spectral_density_type_ecology.pdf",p,width = 10,height = 16)
 
 
-## >> Motifs difference ecology and type of interaction ----
+## >> Motifs difference ecology and type of interaction (Fig. S4) ----
 
 count_motif=save[,c(1,2,108:151)]
 
@@ -723,7 +723,7 @@ print(panel_C)
 dev.off()
 
 
-## >> PCA & Kmeans on empirical alone + (empirical + simulated) network ----
+## >> PCA & Kmeans on empirical alone + (empirical + simulated) network (Fig. S5-7, S11-13)----
 
 set.seed(123)
 
@@ -779,23 +779,6 @@ for (i in c("Global_metrics","Laplacian","Motifs")){ #Fig number
   
   res.pca=PCA(data_empiric[,3:(dim(data_empiric)[2])], scale.unit = TRUE, ncp = 2,  graph=F)
   
-  print(fviz_pca_ind(res.pca, geom.ind = "point", 
-                     axes=c(1,2), 
-                     pointsize = 1.5, 
-                     col.ind=data_empiric$Type,
-                     fill.ind=data_empiric$Type,
-                     addEllipses = F,
-                     alpha.ind = 1,
-                     label = "var",
-                     repel = T,mean.point = FALSE,
-                     legend.title = "Network ecology")+labs(title="")+
-          theme_classic()+scale_shape_manual(values=0:8)+
-          xlab(paste0("PC 1 (",round(res.pca$eig[1,2], 1)," %)"))+
-          ylab(paste0("PC 2 (",round(res.pca$eig[2,2], 1)," %)"))+
-          theme(plot.title = element_text(hjust = 0.2)))
-  
-  dev.off()
-  
   set.seed(1)
   
   km.res=kmeans(res.pca$ind$coord, 2, nstart = 50)
@@ -815,6 +798,32 @@ for (i in c("Global_metrics","Laplacian","Motifs")){ #Fig number
   print(mean(classif_out_cluster[c(1,6,7,8,9)]*apply(Kmeans_table, 2, sum)[c(1,6,7,8,9)])) #moyenne pond?r?e mutualistic
   print(mean(classif_out_cluster[c(2,3,4,5)]*apply(Kmeans_table, 2, sum)[c(2:5)])) #moyenne pond?r?e antagonistic
   
+  
+  print(fviz_pca_ind(res.pca, geom.ind = "point", 
+                     axes=c(1,2), 
+                     pointsize = 1.5, 
+                     col.ind=data_empiric$Type,
+                     fill.ind=data_empiric$Type,
+                     addEllipses = F,
+                     alpha.ind = 1,
+                     label = "var",
+                     repel = T,mean.point = FALSE,
+                     legend.title = "Network ecology")+labs(title="")+
+          theme_classic()+scale_shape_manual(values=0:8)+
+          xlab(paste0("PC 1 (",round(res.pca$eig[1,2], 1)," %)"))+
+          ylab(paste0("PC 2 (",round(res.pca$eig[2,2], 1)," %)"))+
+          theme(plot.title = element_text(hjust = 0.2))+
+    geom_polygon(data = data_empiric%>%add_column(., Clusters=km.res$cluster,
+                                                  PC1=res.pca$ind$coord[,1],
+                                                  PC2=res.pca$ind$coord[,2])%>%
+                   dplyr::group_by(Clusters) %>% 
+                   dplyr::slice(chull(PC1, PC2)),
+                 aes(x=PC1,y=PC2,group=as.factor(Clusters)),
+                 alpha = 0.1,
+                 show.legend = FALSE))
+  
+  dev.off()
+ 
   write.table(Kmeans_table,paste0("./Figures/SI/Table_PCA_kmeans_ecology_",i,".csv"),sep=";")
   
   
@@ -822,7 +831,7 @@ for (i in c("Global_metrics","Laplacian","Motifs")){ #Fig number
 }
 
 
-## >> Testing influence of overfitting on our results ----
+## >> Testing influence of overfitting on our results (Fig. S8) ----
 
 
 
@@ -921,7 +930,7 @@ ggsave(p,filename = "./Figures/SI/Overfitting.pdf",width = 9,height = 4)
 
 
 
-## >> Controlling for the number of ecologies (A) and the asymmetry antagonist/mutualist in the training set ----
+## >> Controlling for the number of ecologies (A) and the asymmetry antagonist/mutualist in the training set (Fig. S9) ----
 
 
 #Part A : controlling for the number of ecology in the training set
@@ -1188,7 +1197,7 @@ write.table(results_NN,"./Figures/SI/Asymetry_mutua_anta_data.csv",sep=";")
 
 
 
-## >> Global metrics of empirical & simulated networks  ----
+## >> Global metrics of empirical & simulated networks (Fig. S10) ----
 
 
 data_empiric=save[,c(1,3:5,106,107)]
@@ -1278,7 +1287,7 @@ wilcox.test(save$Diff,save_bipartite$Diff);mean(save_bipartite$Diff);mean(save$D
 
 #******************************************************************************#
 
-## >> Motifs frequencies between simulations and empirical networks ----
+## >> Motifs frequencies between simulations and empirical networks  (Fig. S14) ----
 
 
 data_empiric=save[,c(1,2,108:151)]
@@ -1347,7 +1356,7 @@ p=ggarrange(p1,p2,p3,p4,nrow = 4, labels = LETTERS[1:4])
 ggsave("./Figures/SI/Motifs_frequency_empiric_simulations.pdf",p,width = 12,height = 14)
 
 
-## >> Difference in spectral density between simulated and empirical networks ----
+## >> Difference in spectral density between simulated and empirical networks (Fig. S15) ----
 
 data_empiric=save[,c(1,2,6:105)]
 data_empiric$Category=as.character(data_empiric$Category)
@@ -1421,7 +1430,1217 @@ ggsave("./Figures/SI/Spectral_density_simulations_empirical.pdf",p,width = 10,he
 
 
 
-## >> Table: AIC mixed effect models type of ecology ----
+## >> Robustness: network permutation ----
+
+n_time_perm=200
+d=tibble()
+
+Permute_network_classification_permaswap=function(ID){
+  
+  save_classif=tibble()
+  
+  #randomize each network while keeping degree and connectance fixed
+  list_net=lapply(1:length(Empirical_networks),function(x){
+    return(permatswap(Empirical_networks[[x]],
+                      method = "quasiswap", fixedmar="both", shuffle = "both",
+                      strata = NULL, mtype = "count", times = 1)$perm[[1]])
+    # return(shuffle.web(Empirical_networks[[x]],1)[[1]])
+  })
+  
+  
+  # Compute motif frequency
+  d_count=tibble()
+  
+  for (net in 1:length(list_net)){
+    motif_freq=as_tibble(t(mcount(list_net[[net]],six_node = T,normalisation = T,mean_weight = F,standard_dev = F)$normalise_sum))
+    colnames(motif_freq)=colnames(motif_freq)=paste0("Motif_",1:44)
+    d_count=rbind(d_count,motif_freq%>%add_column(., Network_ID=net,Category=save$Category[net])%>%
+                    dplyr::relocate(., Category,.before="Motif_1")%>%
+                    dplyr::relocate(.,Network_ID,.after="Category"))
+  }
+  
+  
+  nb_NN=50
+  for (b in sample(1:10000,nb_NN)){
+    
+    set.seed(b)
+    sample_test = sample(1:nrow(d_count),size = 0.2*nrow(d_count),replace = F)
+    
+    
+    data.test = d_count[sample_test,]
+    data.train = d_count[-sample_test,]
+    
+    formule = as.formula(c('Category ~ ', paste0(colnames(data.train[, 3:length(data.train)]), collapse = "+"))) #classify networks according to the type
+    nn_1layer = neuralnet(formule,data.train,hidden = 60 , 
+                          stepmax = 10 ** 8,lifesign = 'full', 
+                          linear.output=F,rep=1) # number of max step to train
+    
+    prediction_nn = predict(nn_1layer, data.test[,3:length(data.test)])
+    prediction_nn_test = prediction_nn > 0.5# the value of 0.5 is the threshold of the network to classify them
+    
+    u=1
+    for (i in prediction_nn_test){
+      
+      if (i=="FALSE"){prediction_nn_test[u]="Antagonistic"}
+      if( i=="TRUE"){prediction_nn_test[u]="Mutualistic"}
+      u=u+1
+    }
+    prediction_nn_test=as.data.frame(prediction_nn_test[,2])
+    table_predictions=table(prediction_nn_test[,1],data.test$Category)
+    
+    save_classif=rbind(save_classif,tibble(AA_classified_AA=table_predictions[1,1],
+                                           AA_classified_MM=table_predictions[2,1],
+                                           MM_classified_MM=table_predictions[2,2],
+                                           MM_classified_AA=table_predictions[1,2]))
+  }
+  
+  write.table(paste0("./Data/Permutations/Perm_perma_",ID,".csv"),sep=";")
+  
+  
+}
+
+Permute_network_classification_shuffleweb=function(ID){
+  
+  save_classif=tibble()
+  
+  #randomize each network while keeping degree and connectance fixed
+  list_net=lapply(1:length(Empirical_networks),function(x){
+    # return(permatswap(Empirical_networks[[x]],
+    #                   method = "quasiswap", fixedmar="both", shuffle = "both",
+    #                   strata = NULL, mtype = "count", times = 1)$perm[[1]])
+    return(shuffle.web(Empirical_networks[[x]],1)[[1]])
+  })
+  
+  
+  # Compute motif frequency
+  d_count=tibble()
+  
+  for (net in 1:length(list_net)){
+    motif_freq=as_tibble(t(mcount(list_net[[net]],six_node = T,normalisation = T,mean_weight = F,standard_dev = F)$normalise_sum))
+    colnames(motif_freq)=colnames(motif_freq)=paste0("Motif_",1:44)
+    d_count=rbind(d_count,motif_freq%>%add_column(., Network_ID=net,Category=save$Category[net])%>%
+                    dplyr::relocate(., Category,.before="Motif_1")%>%
+                    dplyr::relocate(.,Network_ID,.after="Category"))
+  }
+  
+  
+  nb_NN=50
+  for (b in sample(1:10000,nb_NN)){
+    
+    set.seed(b)
+    sample_test = sample(1:nrow(d_count),size = 0.2*nrow(d_count),replace = F)
+    
+    
+    data.test = d_count[sample_test,]
+    data.train = d_count[-sample_test,]
+    
+    formule = as.formula(c('Category ~ ', paste0(colnames(data.train[, 3:length(data.train)]), collapse = "+"))) #classify networks according to the type
+    nn_1layer = neuralnet(formule,data.train,hidden = 60 , 
+                          stepmax = 10 ** 8,lifesign = 'full', 
+                          linear.output=F,rep=1) # number of max step to train
+    
+    prediction_nn = predict(nn_1layer, data.test[,3:length(data.test)])
+    prediction_nn_test = prediction_nn > 0.5# the value of 0.5 is the threshold of the network to classify them
+    
+    u=1
+    for (i in prediction_nn_test){
+      
+      if (i=="FALSE"){prediction_nn_test[u]="Antagonistic"}
+      if( i=="TRUE"){prediction_nn_test[u]="Mutualistic"}
+      u=u+1
+    }
+    prediction_nn_test=as.data.frame(prediction_nn_test[,2])
+    table_predictions=table(prediction_nn_test[,1],data.test$Category)
+    
+    save_classif=rbind(save_classif,tibble(AA_classified_AA=table_predictions[1,1],
+                                           AA_classified_MM=table_predictions[2,1],
+                                           MM_classified_MM=table_predictions[2,2],
+                                           MM_classified_AA=table_predictions[1,2]))
+  }
+  
+  write.table(paste0("./Data/Permutations/Perm_",ID,".csv"),sep=";")
+  
+  
+}
+
+Permute_network_classification_r2d=function(ID){
+  
+  save_classif=tibble()
+  
+  #randomize each network while keeping degree and connectance fixed
+  list_net=lapply(1:length(Empirical_networks),function(x){
+    return(bipartite::nullmodel(Empirical_networks[[x]],1)[[1]])
+    
+  })
+  
+  
+  # Compute motif frequency
+  d_count=tibble()
+  
+  for (net in 1:length(list_net)){
+    motif_freq=as_tibble(t(mcount(list_net[[net]],six_node = T,normalisation = T,mean_weight = F,standard_dev = F)$normalise_sum))
+    colnames(motif_freq)=colnames(motif_freq)=paste0("Motif_",1:44)
+    d_count=rbind(d_count,motif_freq%>%add_column(., Network_ID=net,Category=save$Category[net])%>%
+                    dplyr::relocate(., Category,.before="Motif_1")%>%
+                    dplyr::relocate(.,Network_ID,.after="Category"))
+  }
+  
+  
+  nb_NN=50
+  for (b in sample(1:10000,nb_NN)){
+    
+    set.seed(b)
+    sample_test = sample(1:nrow(d_count),size = 0.2*nrow(d_count),replace = F)
+    
+    
+    data.test = d_count[sample_test,]
+    data.train = d_count[-sample_test,]
+    
+    formule = as.formula(c('Category ~ ', paste0(colnames(data.train[, 3:length(data.train)]), collapse = "+"))) #classify networks according to the type
+    nn_1layer = neuralnet(formule,data.train,hidden = 60 , 
+                          stepmax = 10 ** 8,lifesign = 'full', 
+                          linear.output=F,rep=1) # number of max step to train
+    
+    prediction_nn = predict(nn_1layer, data.test[,3:length(data.test)])
+    prediction_nn_test = prediction_nn > 0.5# the value of 0.5 is the threshold of the network to classify them
+    
+    u=1
+    for (i in prediction_nn_test){
+      
+      if (i=="FALSE"){prediction_nn_test[u]="Antagonistic"}
+      if( i=="TRUE"){prediction_nn_test[u]="Mutualistic"}
+      u=u+1
+    }
+    prediction_nn_test=as.data.frame(prediction_nn_test[,2])
+    table_predictions=table(prediction_nn_test[,1],data.test$Category)
+    
+    save_classif=rbind(save_classif,tibble(AA_classified_AA=table_predictions[1,1],
+                                           AA_classified_MM=table_predictions[2,1],
+                                           MM_classified_MM=table_predictions[2,2],
+                                           MM_classified_AA=table_predictions[1,2]))
+  }
+  
+  write.table(paste0("./Data/Permutations/Perm_r2d_",ID,".csv"),sep=";")
+  
+  
+}
+
+library(parallel)
+mclapply(1:200,Permute_network_classification_permaswap,mc.cores = 40)
+mclapply(1:200,Permute_network_classification_shuffleweb,mc.cores = 40)
+mclapply(1:200,Permute_network_classification_r2d,mc.cores = 40)
+
+
+
+d_all=tibble()
+for (k in list.files("./Data/Permutations/",".csv")
+     [-grep("perma",list.files("./Data/Permutations/",".csv"))]){
+  d_all=rbind(d_all,as_tibble(t(colMeans(read.table(paste0("./Data/Permutations/",k),sep=";")%>%
+                                          add_column(., f1_mut=as.numeric(sapply(1:nrow(.),
+                                                                      function(x){return(F1(.[x,]))})),
+                                                     f1_anta=as.numeric(sapply(1:nrow(.),
+                                                                    function(x){return(F1(.[x,],"anta"))}))))))%>%
+                add_column(., Type_rand="Connectance"))
+}
+
+for (k in list.files("./Data/Permutations/","r2d")){
+  d_all=rbind(d_all,as_tibble(t(colMeans(read.table(paste0("./Data/Permutations/",k),sep=";")%>%
+                                          add_column(., f1_mut=as.numeric(sapply(1:nrow(.),
+                                                                                 function(x){return(F1(.[x,]))})),
+                                                     f1_anta=as.numeric(sapply(1:nrow(.),
+                                                                               function(x){return(F1(.[x,],"anta"))}))))))%>%
+                add_column(., Type_rand="Degree"))
+}
+
+for (k in list.files("./Data/Permutations/","perma")){
+  d_all=rbind(d_all,as_tibble(t(colMeans(read.table(paste0("./Data/Permutations/",k),sep=";")%>%
+                                          add_column(., f1_mut=as.numeric(sapply(1:nrow(.),
+                                                                                 function(x){return(F1(.[x,]))})),
+                                                     f1_anta=as.numeric(sapply(1:nrow(.),
+                                                                               function(x){return(F1(.[x,],"anta"))}))))))%>%
+                add_column(., Type_rand="Degree+Connectance"))
+}
+
+d_melt=d_all%>%
+  mutate(.,
+         AA_classified_AA=.$AA_classified_AA/rowSums(.[,1:2]),
+         MM_classified_MM=.$MM_classified_MM/rowSums(.[,3:4]))%>%
+  melt(., measure.vars=c("MM_classified_MM","AA_classified_AA"))%>%
+  mutate(., variable=recode_factor(variable,
+                                   "MM_classified_MM"="Mutualistic networks",
+                                   "AA_classified_AA"="Antagonistic networks"))
+
+pval_MM=d_melt%>%
+  filter(.,variable=="Mutualistic networks")%>%
+  group_by(.,variable,Type_rand)%>%
+  summarise(., .groups="keep",pval=length(which(value>.84))/nrow(.))%>%
+  add_column(., y_text=.85)
+
+pval_AA=d_melt%>%
+  filter(.,variable=="Antagonistic networks")%>%
+  group_by(.,variable,Type_rand)%>%
+  summarise(., .groups="keep",pval=length(which(value>.65))/nrow(.))%>%
+  add_column(., y_text=.67)
+
+p1=ggplot(d_melt)+
+  geom_boxplot(aes(x=Type_rand,y=value,fill=variable),coef=1e30)+
+  geom_hline(data=tibble(variable=c("Antagonistic networks","Mutualistic networks"),
+                         y=c(.65,.84)),aes(yintercept = y))+
+  geom_text(data=rbind(pval_AA,pval_MM),
+            aes(x=Type_rand,y=y_text,label=round(pval,3)))+
+  labs(x="",fill="",y="% of correct classification")+
+  scale_fill_manual(values=c('#8fd175','#DECF3F'))+
+  
+  facet_wrap(.~variable,scales = "free")+
+  theme_classic()+
+  theme(legend.position = "bottom")
+
+d_melt=d_all%>%
+  mutate(.,
+         AA_classified_AA=.$AA_classified_AA/rowSums(.[,1:2]),
+         MM_classified_MM=.$MM_classified_MM/rowSums(.[,3:4]))%>%
+  melt(., measure.vars=c("f1_mut","f1_anta"))%>%
+  mutate(., variable=recode_factor(variable,
+                                   "f1_mut"="F-score mutualistic networks",
+                                   "f1_anta"="F-score antagonistic networks"))
+
+pval_MM=d_melt%>%
+  filter(.,variable=="F-score mutualistic networks")%>%
+  group_by(.,variable,Type_rand)%>%
+  summarise(., .groups="keep",pval=length(which(value>.82))/nrow(.))%>%
+  add_column(., y_text=.825)
+
+pval_AA=d_melt%>%
+  filter(.,variable=="F-score antagonistic networks")%>%
+  group_by(.,variable,Type_rand)%>%
+  summarise(., .groups="keep",pval=length(which(value>.68))/nrow(.))%>%
+  add_column(., y_text=.7)
+
+p2=ggplot(d_melt)+
+  geom_boxplot(aes(x=Type_rand,y=value,fill=variable),coef=1e30)+
+  geom_hline(data=tibble(variable=c("F-score antagonistic networks","F-score mutualistic networks"),
+                         y=c(.68,.82)),aes(yintercept = y))+
+  geom_text(data=rbind(pval_AA,pval_MM),
+            aes(x=Type_rand,y=y_text,label=round(pval,3)))+
+  labs(x="",fill="",y="F-score")+
+  scale_fill_manual(values=c('#8fd175','#DECF3F'))+
+  
+  facet_wrap(.~variable,scales = "free")+
+  theme_classic()+
+  theme(legend.position = "bottom")
+
+ggsave("./Figures/SI/Robustness_permutation.pdf",
+       ggarrange(p1+theme(strip.background.x = element_blank(),strip.text.x = element_blank()),
+                 p2+theme(strip.background.x = element_blank(),strip.text.x = element_blank(),legend.position = "none"),
+                 nrow=2,labels=letters[1:2]),width = 8,height = 8)
+
+
+
+## >> Specificity sensu Michaslka & Allesina (Fig. S16) ----
+
+dir.create("./Data/Specificity",showWarnings = F)
+n_time_perm=200
+d=tibble()
+
+Permute_network_classification_permaswap=function(ID){
+  
+  save_classif=tibble()
+  
+  #randomize each network while keeping degree and connectance fixed
+  list_net=lapply(1:length(Empirical_networks),function(x){
+    return(permatswap(Empirical_networks[[x]],
+                      method = "quasiswap", fixedmar="both", shuffle = "both",
+                      strata = NULL, mtype = "count", times = 1)$perm[[1]])
+    # return(shuffle.web(Empirical_networks[[x]],1)[[1]])
+  })
+  
+  # Compute motif frequency
+  d_count=tibble()
+  
+  for (net in 1:length(list_net)){
+    motif_freq=as_tibble(t(mcount(list_net[[net]],six_node = T,normalisation = T,mean_weight = F,standard_dev = F)$normalise_sum))
+    colnames(motif_freq)=colnames(motif_freq)=paste0("Motif_",1:44)
+    d_count=rbind(d_count,motif_freq%>%add_column(., Network_ID=net,Category=save$Category[net])%>%
+                    dplyr::relocate(., Category,.before="Motif_1")%>%
+                    dplyr::relocate(.,Network_ID,.after="Category"))
+  }
+  
+  
+  nb_NN=50
+  for (b in sample(1:10000,nb_NN)){
+    
+    set.seed(b)
+    sample_test = sample(1:nrow(d_count),size = 0.2*nrow(d_count),replace = F)
+    
+    
+    data.test = d_count[sample_test,] #testing on randomized ones
+    data.train = data_empiric[-sample_test,combination[[2]]] #training on empirical networks
+    
+    formule = as.formula(c('Category ~ ', paste0(colnames(data.train[, 3:length(data.train)]), collapse = "+"))) #classify networks according to the type
+    nn_1layer = neuralnet(formule,data.train,hidden = 60 , 
+                          stepmax = 10 ** 8,lifesign = 'full', 
+                          linear.output=F,rep=1) # number of max step to train
+    
+    prediction_nn = predict(nn_1layer, data.test[,3:length(data.test)])
+    prediction_nn_test = prediction_nn > 0.5# the value of 0.5 is the threshold of the network to classify them
+    
+    u=1
+    for (i in prediction_nn_test){
+      
+      if (i=="FALSE"){prediction_nn_test[u]="Antagonistic"}
+      if( i=="TRUE"){prediction_nn_test[u]="Mutualistic"}
+      u=u+1
+    }
+    prediction_nn_test=as.data.frame(prediction_nn_test[,2])
+    table_predictions=table(prediction_nn_test[,1],data.test$Category)
+    
+    save_classif=rbind(save_classif,tibble(AA_classified_AA=table_predictions[1,1],
+                                           AA_classified_MM=table_predictions[2,1],
+                                           MM_classified_MM=table_predictions[2,2],
+                                           MM_classified_AA=table_predictions[1,2]))
+  }
+  
+  write.table(save_classif,paste0("./Data/Specificity/Perm_perma_",ID,".csv"),sep=";")
+  
+  
+}
+
+Permute_network_classification_shuffleweb=function(ID){
+  
+  save_classif=tibble()
+  
+  #randomize each network while keeping degree and connectance fixed
+  list_net=lapply(1:length(Empirical_networks),function(x){
+    # return(permatswap(Empirical_networks[[x]],
+    #                   method = "quasiswap", fixedmar="both", shuffle = "both",
+    #                   strata = NULL, mtype = "count", times = 1)$perm[[1]])
+    return(shuffle.web(Empirical_networks[[x]],1)[[1]])
+  })
+  
+  
+  # Compute motif frequency
+  d_count=tibble()
+  
+  for (net in 1:length(list_net)){
+    motif_freq=as_tibble(t(mcount(list_net[[net]],six_node = T,normalisation = T,mean_weight = F,standard_dev = F)$normalise_sum))
+    colnames(motif_freq)=colnames(motif_freq)=paste0("Motif_",1:44)
+    d_count=rbind(d_count,motif_freq%>%add_column(., Network_ID=net,Category=save$Category[net])%>%
+                    dplyr::relocate(., Category,.before="Motif_1")%>%
+                    dplyr::relocate(.,Network_ID,.after="Category"))
+  }
+  
+  
+  nb_NN=50
+  for (b in sample(1:10000,nb_NN)){
+    
+    set.seed(b)
+    sample_test = sample(1:nrow(d_count),size = 0.2*nrow(d_count),replace = F)
+    
+    
+    data.test = d_count[sample_test,] #testing on randomized ones
+    data.train = data_empiric[-sample_test,combination[[2]]] #training on empirical networks
+    
+    formule = as.formula(c('Category ~ ', paste0(colnames(data.train[, 3:length(data.train)]), collapse = "+"))) #classify networks according to the type
+    nn_1layer = neuralnet(formule,data.train,hidden = 60 , 
+                          stepmax = 10 ** 8,lifesign = 'full', 
+                          linear.output=F,rep=1) # number of max step to train
+    
+    prediction_nn = predict(nn_1layer, data.test[,3:length(data.test)])
+    prediction_nn_test = prediction_nn > 0.5# the value of 0.5 is the threshold of the network to classify them
+    
+    u=1
+    for (i in prediction_nn_test){
+      
+      if (i=="FALSE"){prediction_nn_test[u]="Antagonistic"}
+      if( i=="TRUE"){prediction_nn_test[u]="Mutualistic"}
+      u=u+1
+    }
+    prediction_nn_test=as.data.frame(prediction_nn_test[,2])
+    table_predictions=table(prediction_nn_test[,1],data.test$Category)
+    
+    save_classif=rbind(save_classif,tibble(AA_classified_AA=table_predictions[1,1],
+                                           AA_classified_MM=table_predictions[2,1],
+                                           MM_classified_MM=table_predictions[2,2],
+                                           MM_classified_AA=table_predictions[1,2]))
+  }
+  
+  write.table(save_classif,paste0("./Data/Specificity/Perm_",ID,".csv"),sep=";")
+  
+  
+}
+
+Permute_network_classification_r2d=function(ID){
+  
+  save_classif=tibble()
+  
+  #randomize each network while keeping degree and connectance fixed
+  list_net=lapply(1:length(Empirical_networks),function(x){
+    return(bipartite::nullmodel(Empirical_networks[[x]],1)[[1]])
+    
+  })
+  
+  
+  # Compute motif frequency
+  d_count=tibble()
+  
+  for (net in 1:length(list_net)){
+    motif_freq=as_tibble(t(mcount(list_net[[net]],six_node = T,normalisation = T,mean_weight = F,standard_dev = F)$normalise_sum))
+    colnames(motif_freq)=colnames(motif_freq)=paste0("Motif_",1:44)
+    d_count=rbind(d_count,motif_freq%>%add_column(., Network_ID=net,Category=save$Category[net])%>%
+                    dplyr::relocate(., Category,.before="Motif_1")%>%
+                    dplyr::relocate(.,Network_ID,.after="Category"))
+  }
+  
+  
+  nb_NN=50
+  for (b in sample(1:10000,nb_NN)){
+    
+    set.seed(b)
+    sample_test = sample(1:nrow(d_count),size = 0.2*nrow(d_count),replace = F)
+    
+    
+    data.test = d_count[sample_test,] #testing on randomized ones
+    data.train = data_empiric[-sample_test,combination[[2]]] #training on empirical networks
+    
+    formule = as.formula(c('Category ~ ', paste0(colnames(data.train[, 3:length(data.train)]), collapse = "+"))) #classify networks according to the type
+    nn_1layer = neuralnet(formule,data.train,hidden = 60 , 
+                          stepmax = 10 ** 8,lifesign = 'full', 
+                          linear.output=F,rep=1) # number of max step to train
+    
+    prediction_nn = predict(nn_1layer, data.test[,3:length(data.test)])
+    prediction_nn_test = prediction_nn > 0.5# the value of 0.5 is the threshold of the network to classify them
+    
+    u=1
+    for (i in prediction_nn_test){
+      
+      if (i=="FALSE"){prediction_nn_test[u]="Antagonistic"}
+      if( i=="TRUE"){prediction_nn_test[u]="Mutualistic"}
+      u=u+1
+    }
+    prediction_nn_test=as.data.frame(prediction_nn_test[,2])
+    table_predictions=table(prediction_nn_test[,1],data.test$Category)
+    
+    save_classif=rbind(save_classif,tibble(AA_classified_AA=table_predictions[1,1],
+                                           AA_classified_MM=table_predictions[2,1],
+                                           MM_classified_MM=table_predictions[2,2],
+                                           MM_classified_AA=table_predictions[1,2]))
+  }
+  
+  write.table(save_classif,paste0("./Data/Specificity/Perm_r2d_",ID,".csv"),sep=";")
+  
+  
+}
+
+library(parallel)
+mclapply(1:200,Permute_network_classification_permaswap,mc.cores = 40)
+mclapply(1:200,Permute_network_classification_shuffleweb,mc.cores = 40)
+mclapply(1:200,Permute_network_classification_r2d,mc.cores = 40)
+
+# PCA randomization empirical networks (Fig. S16c) 
+
+dir.create("./Data/PCA_randomization",showWarnings = F)
+
+Permute_network_classification_shuffleweb=function(ID){
+  
+  save_classif=tibble()
+  
+  #randomize each network while keeping degree and connectance fixed
+  list_net=lapply(1:length(Empirical_networks),function(x){
+    # return(permatswap(Empirical_networks[[x]],
+    #                   method = "quasiswap", fixedmar="both", shuffle = "both",
+    #                   strata = NULL, mtype = "count", times = 1)$perm[[1]])
+    return(shuffle.web(Empirical_networks[[x]],1)[[1]])
+  })
+  
+  
+  # Compute motif frequency
+  d_count=tibble()
+  
+  for (net in 1:length(list_net)){
+    motif_freq=as_tibble(t(mcount(list_net[[net]],six_node = T,normalisation = T,mean_weight = F,standard_dev = F)$normalise_sum))
+    colnames(motif_freq)=colnames(motif_freq)=paste0("Motif_",1:44)
+    d_count=rbind(d_count,motif_freq%>%add_column(., Network_ID=net,Category=save$Category[net])%>%
+                    dplyr::relocate(., Category,.before="Motif_1")%>%
+                    dplyr::relocate(.,Network_ID,.after="Category"))
+  }
+  
+  write.table(d_count,paste0("./Data/PCA_randomization/Perm_",ID,".csv"),sep=";")
+  
+}
+
+Permute_network_classification_r2d=function(ID){
+  
+  save_classif=tibble()
+  
+  #randomize each network while keeping degree and connectance fixed
+  list_net=lapply(1:length(Empirical_networks),function(x){
+    return(bipartite::nullmodel(Empirical_networks[[x]],1)[[1]])
+    
+  })
+  
+  
+  # Compute motif frequency
+  d_count=tibble()
+  
+  for (net in 1:length(list_net)){
+    motif_freq=as_tibble(t(mcount(list_net[[net]],six_node = T,normalisation = T,mean_weight = F,standard_dev = F)$normalise_sum))
+    colnames(motif_freq)=colnames(motif_freq)=paste0("Motif_",1:44)
+    d_count=rbind(d_count,motif_freq%>%add_column(., Network_ID=net,Category=save$Category[net])%>%
+                    dplyr::relocate(., Category,.before="Motif_1")%>%
+                    dplyr::relocate(.,Network_ID,.after="Category"))
+  }
+  
+  
+  
+  write.table(d_count,paste0("./Data/PCA_randomization/Perm_r2d_",ID,".csv"),sep=";")
+  
+  
+}
+
+library(parallel)
+mclapply(1:200,Permute_network_classification_shuffleweb,mc.cores = 40)
+mclapply(1:200,Permute_network_classification_r2d,mc.cores = 40)
+
+
+
+
+#Reading the data
+
+d_all=tibble()
+list_file_1=list.files("./Data/Specificity/",".csv")[-grep("perma",list.files("./Data/Specificity/",".csv"))]
+
+for (k in list_file_1[-grep("r2d",list_file_1)]){
+  d_all=rbind(d_all,as_tibble(t(colMeans(read.table(paste0("./Data/Specificity/",k),sep=";")%>%
+                                           add_column(., f1_mut=as.numeric(sapply(1:nrow(.),
+                                                                                  function(x){return(F1(.[x,]))})),
+                                                      f1_anta=as.numeric(sapply(1:nrow(.),
+                                                                                function(x){return(F1(.[x,],"anta"))}))))))%>%
+                add_column(., Type_rand="Connectance"))
+}
+
+for (k in list.files("./Data/Specificity/","r2d")){
+  d_all=rbind(d_all,as_tibble(t(colMeans(read.table(paste0("./Data/Specificity/",k),sep=";")%>%
+                                           add_column(., f1_mut=as.numeric(sapply(1:nrow(.),
+                                                                                  function(x){return(F1(.[x,]))})),
+                                                      f1_anta=as.numeric(sapply(1:nrow(.),
+                                                                                function(x){return(F1(.[x,],"anta"))}))))))%>%
+                add_column(., Type_rand="Degree"))
+}
+
+# for (k in list.files("./Data/Specificity/","perma")){
+#   d_all=rbind(d_all,as_tibble(t(colMeans(read.table(paste0("./Data/Specificity/",k),sep=";")%>%
+#                                            add_column(., f1_mut=as.numeric(sapply(1:nrow(.),
+#                                                                                   function(x){return(F1(.[x,]))})),
+#                                                       f1_anta=as.numeric(sapply(1:nrow(.),
+#                                                                                 function(x){return(F1(.[x,],"anta"))}))))))%>%
+#                 add_column(., Type_rand="Degree+Connectance"))
+# }
+
+
+d_melt=d_all%>%
+  mutate(.,
+         AA_classified_AA=.$AA_classified_AA/rowSums(.[,1:2]),
+         MM_classified_MM=.$MM_classified_MM/rowSums(.[,3:4]))%>%
+  melt(., measure.vars=c("MM_classified_MM","AA_classified_AA"))%>%
+  mutate(., variable=recode_factor(variable,
+                                   "MM_classified_MM"="Mutualistic networks",
+                                   "AA_classified_AA"="Antagonistic networks"))
+
+pval_MM=d_melt%>%
+  dplyr::filter(.,variable=="Mutualistic networks")%>%
+  dplyr::group_by(.,variable,Type_rand)%>%
+  dplyr::summarise(., .groups="keep",pval=length(which(value>.84))/nrow(.))%>%
+  add_column(., y_text=.85)
+
+pval_AA=d_melt%>%
+  filter(.,variable=="Antagonistic networks")%>%
+  dplyr::group_by(.,variable,Type_rand)%>%
+  dplyr::summarise(., .groups="keep",pval=length(which(value>.65))/nrow(.))%>%
+  add_column(., y_text=.67)
+
+p11=ggplot(d_melt%>%filter(., variable=="Antagonistic networks"))+
+  geom_boxplot(aes(x=Type_rand,y=value,fill=variable),coef=1e30)+
+  geom_hline(data=tibble(variable=c("Antagonistic networks"),
+                         y=c(.65)),aes(yintercept = y))+
+  # geom_text(data=rbind(pval_AA,pval_MM),
+  #           aes(x=Type_rand,y=y_text,label=round(pval,3)))+
+  labs(x="",fill="",y="% of correct classification")+
+  scale_fill_manual(values=c('#DECF3F'))+
+  
+  theme_classic()+
+  theme(legend.position = "bottom")
+
+p12=ggplot(d_melt%>%filter(., variable=="Mutualistic networks"))+
+  geom_boxplot(aes(x=Type_rand,y=value,fill=variable),coef=1e30)+
+  geom_hline(data=tibble(variable=c("Mutualistic networks"),
+                         y=c(.84)),aes(yintercept = y))+
+  # geom_text(data=rbind(pval_AA,pval_MM),
+  #           aes(x=Type_rand,y=y_text,label=round(pval,3)))+
+  labs(x="",fill="",y="% of correct classification")+
+  scale_fill_manual(values=c('#8fd175'))+
+  theme_classic()+
+  theme(legend.position = "bottom")
+
+d_melt=d_all%>%
+  mutate(.,
+         AA_classified_AA=.$AA_classified_AA/rowSums(.[,1:2]),
+         MM_classified_MM=.$MM_classified_MM/rowSums(.[,3:4]))%>%
+  melt(., measure.vars=c("f1_mut","f1_anta"))%>%
+  mutate(., variable=recode_factor(variable,
+                                   "f1_mut"="F-score mutualistic networks",
+                                   "f1_anta"="F-score antagonistic networks"))
+
+pval_MM=d_melt%>%
+  filter(.,variable=="F-score mutualistic networks")%>%
+  dplyr::group_by(.,variable,Type_rand)%>%
+  dplyr::summarise(., .groups="keep",pval=length(which(value>.82))/nrow(.))%>%
+  add_column(., y_text=.825)
+
+pval_AA=d_melt%>%
+  filter(.,variable=="F-score antagonistic networks")%>%
+  dplyr::group_by(.,variable,Type_rand)%>%
+  dplyr::summarise(., .groups="keep",pval=length(which(value>.68))/nrow(.))%>%
+  add_column(., y_text=.7)
+
+p21=ggplot(d_melt%>%filter(., variable=="F-score antagonistic networks"))+
+  geom_boxplot(aes(x=Type_rand,y=value,fill=variable),coef=1e30)+
+  geom_hline(data=tibble(variable=c("F-score antagonistic networks"),
+                         y=c(.68)),aes(yintercept = y))+
+  # geom_text(data=rbind(pval_AA,pval_MM),
+  #           aes(x=Type_rand,y=y_text,label=round(pval,3)))+
+  labs(x="",fill="",y="F-score")+
+  scale_fill_manual(values=c('#DECF3F'))+
+  theme_classic()+
+  theme(legend.position = "bottom")
+
+p22=ggplot(d_melt%>%filter(., variable=="F-score mutualistic networks"))+
+  geom_boxplot(aes(x=Type_rand,y=value,fill=variable),coef=1e30)+
+  geom_hline(data=tibble(variable=c("F-score mutualistic networks"),
+                         y=c(.82)),aes(yintercept = y))+
+  # geom_text(data=rbind(pval_AA,pval_MM),
+  #           aes(x=Type_rand,y=y_text,label=round(pval,3)))+
+  labs(x="",fill="",y="F-score")+
+  scale_fill_manual(values=c('#8fd175'))+
+  theme_classic()+
+  theme(legend.position = "bottom")
+
+
+data_empiric=save
+d_pca=tibble()
+list_file_1=list.files("./Data/PCA_randomization/",".csv")[-grep("r2d",list.files("./Data/PCA_randomization/",".csv"))]
+
+for (k in list_file_1){
+  d_pca=rbind(d_pca,read.table(paste0("./Data/PCA_randomization/",k),sep=";")%>%
+                add_column(., Type_rand="Connectance",Category=data_empiric$Category,Net_ID=1:343)%>%
+                dplyr::relocate(., Type_rand,.before =  Motif_1 )%>%
+                dplyr::select(., -Category.1,-Network_ID))
+}
+
+for (k in list.files("./Data/PCA_randomization/","r2d")){
+  d_pca=rbind(d_pca,read.table(paste0("./Data/PCA_randomization/",k),sep=";")%>%
+                add_column(., Type_rand="Degree",Category=data_empiric$Category,Net_ID=1:343)%>%
+                dplyr::relocate(., Type_rand,.before =  Motif_1 )%>%
+                dplyr::select(., -Category.1,-Network_ID))
+}
+
+
+data_empiric=save[,combination[[2]][-2]]
+data_empiric=rbind(data_empiric%>%add_column(., Type_rand="Empirical",Net_ID=1:343)%>%
+                     dplyr::relocate(., Type_rand,.before =  Motif_1 ),
+                   d_pca%>%sample_n(10000))
+
+data_PCA_mut=data_empiric[which(data_empiric$Category=="Mutualistic"),]
+data_PCA_mut=dplyr::arrange(data_PCA_mut, Type_rand,decreasing=T)
+data_PCA_mut=data_PCA_mut[nrow(data_PCA_mut):1,]
+res.pca=PCA(data_PCA_mut[which(data_PCA_mut$Type_rand=="Empirical"),3:dim(data_empiric)[2]], scale.unit = T, ncp = 2,  graph=F)
+
+data_PCA_mut=data_PCA_mut%>%
+  add_column(., PC1=c(res.pca$ind$coord[,1],
+                      predict(res.pca,data_PCA_mut[which(data_PCA_mut$Type_rand!="Empirical"),3:dim(data_PCA_mut)[2]])$coord[,1]),
+             PC2=c(res.pca$ind$coord[,2],
+                   predict(res.pca,data_PCA_mut[which(data_PCA_mut$Type_rand!="Empirical"),3:dim(data_PCA_mut)[2]])$coord[,2]))
+
+p1=ggplot(NULL)+
+  geom_point(data=data_PCA_mut%>%filter(., Type_rand=="Degree"),
+             aes(x=PC1,y=PC2),color="black")+
+  geom_point(data=data_PCA_mut%>%filter(., Type_rand=="Connectance"),
+             aes(x=PC1,y=PC2),color="grey")+
+  geom_point(data=data_PCA_mut%>%filter(., Type_rand=="Empirical"),
+             aes(x=PC1,y=PC2),color="#8fd175")+
+  theme_classic()+
+  labs(x="PC1 (31.3 %)",y="PC2 (23.3 %)")
+
+
+#compute distance from randomized centroids
+centroid_random=data_PCA_mut%>%
+  dplyr::group_by(., Type_rand,Net_ID)%>%
+  dplyr::summarise(., PC1=mean(PC1),PC2=mean(PC2),.groups = "keep")
+
+dist_centroid_mut=data_PCA_mut%>%
+  filter(., Type_rand=="Empirical")%>%
+  add_column(., 
+             Dist_random_degree=as.numeric(sapply(1:nrow(.),function(x){
+               centroid_fil=filter(centroid_random,Type_rand=="Degree")
+               return(((.$PC1[x]-centroid_fil[which(centroid_fil$Net_ID==.$Net_ID[x]),3])**2+(.$PC2[x]-centroid_fil[which(centroid_fil$Net_ID==.$Net_ID[x]),4])**2))})),
+             Dist_random_connec=as.numeric(sapply(1:nrow(.),function(x){
+               centroid_fil=filter(centroid_random,Type_rand=="Connectance")
+               return(((.$PC1[x]-centroid_fil[which(centroid_fil$Net_ID==.$Net_ID[x]),3])**2+(.$PC2[x]-centroid_fil[which(centroid_fil$Net_ID==.$Net_ID[x]),4])**2))})))
+
+#then overlap of hypervolumes in the PCA
+hyper_degree_mut=hypervolume_box(data_PCA_mut%>%filter(., Type_rand=="Degree")%>%dplyr::select(.,PC1,PC2),name="Degree")
+hyper_connec_mut=hypervolume_box(data_PCA_mut%>%filter(., Type_rand=="Connectance")%>%dplyr::select(.,PC1,PC2),name="Connectance")
+hyper_empiri_mut=hypervolume_box(data_PCA_mut%>%filter(., Type_rand=="Empirical")%>%dplyr::select(.,PC1,PC2),name="Empirical")
+
+hv_set=hypervolume_set(hyper_degree_mut, hyper_empiri_mut, check.memory=FALSE)
+
+table_overlap=tibble()
+table_overlap=rbind(table_overlap,as_tibble(t(hypervolume_overlap_statistics(hv_set)))%>%
+                      add_column(., Category="Mutualistic",Type_rand="Degree"))
+
+hv_set=hypervolume_set(hyper_connec_mut, hyper_empiri_mut, check.memory=FALSE)
+table_overlap=rbind(table_overlap,as_tibble(t(hypervolume_overlap_statistics(hv_set)))%>%
+                      add_column(., Category="Mutualistic",Type_rand="Connectance"))
+
+
+
+data_empiric=save[,combination[[2]][-2]]
+data_empiric=rbind(data_empiric%>%add_column(., Type_rand="Empirical",Net_ID=1:343)%>%
+                     dplyr::relocate(., Type_rand,.before =  Motif_1 ),
+                   d_pca%>%sample_n(10000))
+
+data_PCA_ant=data_empiric[which(data_empiric$Category=="Antagonistic"),]
+data_PCA_ant=dplyr::arrange(data_PCA_ant, Type_rand,decreasing=T)
+data_PCA_ant=data_PCA_ant[nrow(data_PCA_ant):1,]
+res.pca=PCA(data_PCA_ant[which(data_PCA_ant$Type_rand=="Empirical"),3:dim(data_empiric)[2]], scale.unit = T, ncp = 2,  graph=F)
+
+data_PCA_ant=data_PCA_ant%>%
+  add_column(., PC1=c(res.pca$ind$coord[,1],
+                      predict(res.pca,data_PCA_ant[which(data_PCA_ant$Type_rand!="Empirical"),3:dim(data_PCA_ant)[2]])$coord[,1]),
+             PC2=c(res.pca$ind$coord[,2],
+                   predict(res.pca,data_PCA_ant[which(data_PCA_ant$Type_rand!="Empirical"),3:dim(data_PCA_ant)[2]])$coord[,2]))
+
+p2=ggplot(NULL)+
+  geom_point(data=data_PCA_ant%>%filter(., Type_rand=="Degree"),
+             aes(x=PC1,y=PC2),color="black")+
+  geom_point(data=data_PCA_ant%>%filter(., Type_rand=="Connectance"),
+             aes(x=PC1,y=PC2),color="grey")+
+  geom_point(data=data_PCA_ant%>%filter(., Type_rand=="Empirical"),
+             aes(x=PC1,y=PC2),color="#DECF3F")+
+  theme_classic()+
+  labs(x="PC1 (33 %)",y="PC2 (18.1 %)")
+
+
+#Distance from centroids
+centroid_random=data_PCA_ant%>%
+  dplyr::group_by(., Type_rand,Net_ID)%>%
+  dplyr::summarise(., PC1=mean(PC1),PC2=mean(PC2),.groups = "keep")
+
+dist_centroid_ant=data_PCA_ant%>%
+  filter(., Type_rand=="Empirical")%>%
+  add_column(., 
+             Dist_random_degree=as.numeric(sapply(1:nrow(.),function(x){
+               centroid_fil=filter(centroid_random,Type_rand=="Degree")
+               return(((.$PC1[x]-centroid_fil[which(centroid_fil$Net_ID==.$Net_ID[x]),3])**2+(.$PC2[x]-centroid_fil[which(centroid_fil$Net_ID==.$Net_ID[x]),4])**2))})),
+             Dist_random_connec=as.numeric(sapply(1:nrow(.),function(x){
+               centroid_fil=filter(centroid_random,Type_rand=="Connectance")
+               return(((.$PC1[x]-centroid_fil[which(centroid_fil$Net_ID==.$Net_ID[x]),3])**2+(.$PC2[x]-centroid_fil[which(centroid_fil$Net_ID==.$Net_ID[x]),4])**2))})))
+
+#then overlap of hypervolumes in the PCA
+hyper_degree_ant=hypervolume_box(data_PCA_ant%>%filter(., Type_rand=="Degree")%>%dplyr::select(.,PC1,PC2),name="Degree")
+hyper_connec_ant=hypervolume_box(data_PCA_ant%>%filter(., Type_rand=="Connectance")%>%dplyr::select(.,PC1,PC2),name="Connectance")
+hyper_empiri_ant=hypervolume_box(data_PCA_ant%>%filter(., Type_rand=="Empirical")%>%dplyr::select(.,PC1,PC2),name="Empirical")
+
+hv_set=hypervolume_set(hyper_degree_ant, hyper_empiri_ant, check.memory=FALSE)
+
+table_overlap=rbind(table_overlap,as_tibble(t(hypervolume_overlap_statistics(hv_set)))%>%
+                      add_column(., Category="Antagonistic",Type_rand="Degree"))
+
+hv_set=hypervolume_set(hyper_connec_ant, hyper_empiri_ant, check.memory=FALSE)
+table_overlap=rbind(table_overlap,as_tibble(t(hypervolume_overlap_statistics(hv_set)))%>%
+                      add_column(., Category="Antagonistic",Type_rand="Connectance"))
+
+
+
+p_dist=ggplot(rbind(dist_centroid_ant,dist_centroid_mut)%>%
+                melt(., measure.vars=c("Dist_random_degree","Dist_random_connec"))%>%
+                dplyr::mutate(., variable=recode_factor(variable,
+                                                        "Dist_random_degree"="Degree",
+                                                        "Dist_random_connec"="Connectance")))+
+  geom_boxplot(aes(x=Category,y=log(value),fill=Category))+
+  theme_classic()+
+  facet_wrap(.~variable)+
+  labs(x="",y="Distance to PCA centroid \n of randomized network (log-transformed)")+
+  scale_fill_manual(values=c("#DECF3F","#8fd175"))+
+  theme(legend.position = "none")
+
+wilcox.test(Dist_random_connec~Category, data=rbind(dist_centroid_ant,dist_centroid_mut))
+wilcox.test(Dist_random_degree~Category, data=rbind(dist_centroid_ant,dist_centroid_mut))
+
+
+data_empiric$Type_rand[which(data_empiric$Type_rand=="Empirical" & data_empiric$Category=="Mutualistic")]="Mutualistic"
+data_empiric$Type_rand[which(data_empiric$Type_rand=="Empirical" & data_empiric$Category=="Antagonistic")]="Antagonistic"
+p_legend_mut=ggplot(NULL)+
+  geom_point(data=data_empiric%>%filter(., Category!="Antagonistic"),aes(x=Motif_1,y=Motif_2,color=Type_rand))+
+  scale_color_manual(values=c("grey","black","#8fd175"))+theme_classic()+
+  labs(color="")+
+  guides(color = guide_legend(override.aes = list(size = 4))) +
+  theme(legend.position = "bottom")
+
+
+p_legend_ant=ggplot(NULL)+
+  geom_point(data=data_empiric%>%filter(., Category!="Mutualistic"),aes(x=Motif_1,y=Motif_2,color=Type_rand))+
+  scale_color_manual(values=c("#DECF3F","grey","black"))+theme_classic()+
+  labs(color="")+
+  guides(color = guide_legend(override.aes = list(size = 4))) +
+  theme(legend.position = "bottom")
+
+p1=ggarrange(p1,get_legend(p_legend_mut),nrow=2,heights = c(1,.1))
+p2=ggarrange(p2,get_legend(p_legend_ant),nrow=2,heights = c(1,.1))
+
+
+
+ggsave("./Figures/SI/Robustness_specificity.pdf",
+       ggarrange(ggarrange(p12,p22,p1,nrow=3,labels = c("a","b","c"),hjust=c(-3,-1,-1)),
+                 ggarrange(p11,p21,p2,nrow=3,labels = c("a","b","c"),hjust=c(-3,0,0)),
+                 ncol=2,labels = LETTERS[1:2]),width = 9,height = 12)
+
+
+ggsave("./Figures/SI/Distance_in_PCA.pdf",p_dist,width = 7,height = 4)
+write.table(table_overlap,"./Figures/Overlap_PCA_randomization.csv",sep=";")
+
+## >> Robustness: 5 or 6 nodes only ----
+dir.create("./Data/5_nodes_only/",showWarnings = F)
+
+
+Robustness_5_motifs=function(ID){
+  
+  load("./Data/network_BD.RData")
+  data_empiric = read.csv("./Data/data_BD.csv",sep=";")
+  data_empiric$Category=as.character(data_empiric$Category)
+  data_empiric$Category[which(data_empiric$Category=="Empirical antagonistic")]="Antagonistic"
+  data_empiric$Category[which(data_empiric$Category=="Empirical mutualistic")]="Mutualistic"
+  save2=data_empiric
+  
+  percentage_classif=rep(0,nrow(data_empiric))
+  presence=rep(0,nrow(data_empiric))
+  
+  
+  d_count=tibble()
+  
+  for (net in 1:length(Empirical_networks)){
+    motif_freq=as_tibble(t(as.matrix(mcount(as.matrix(Empirical_networks[[net]]),normalisation = F,mean_weight = F,standard_dev = F,six_node=F)%>%
+                                       filter(., nodes==5)%>%
+                                       mutate(., frequency=frequency/sum(frequency))%>%
+                                       dplyr::select(., frequency))))
+    colnames(motif_freq)=paste0("Motif_",8:17)
+    d_count=rbind(d_count,motif_freq%>%add_column(., Network_ID=net,Category=data_empiric$Category[net])%>%
+                    dplyr::relocate(., Category,.before="Motif_8")%>%
+                    dplyr::relocate(.,Network_ID,.after="Category"))
+  }
+  
+  data_empiric=d_count
+  save=data_empiric
+  nb_tours=1
+  for (b in sample(1:10000,nb_tours)){
+    data.test=NULL
+    data.train=NULL
+    set.seed(b)
+    sample_test = sample(1:nrow(data_empiric),size = 0.2*nrow(data_empiric),replace = F)
+    
+    
+    data.test = data_empiric[sample_test,]
+    data.train = data_empiric[-sample_test,]
+    data.train=rbind(data.train)
+    
+    
+    formule = as.formula(c('Category ~ ', paste0(colnames(data.train[, 3:length(data.train)]), collapse = "+"))) #classify networks according to the type
+    nn_1layer = neuralnet(formule,data.train,hidden = 60 , 
+                          stepmax = 10 ** 8,lifesign = 'full', 
+                          linear.output=F,rep=1) # number of max step to train
+    
+    prediction_nn = predict(nn_1layer, data.test[,3:length(data.test)])
+    prediction_nn_test = prediction_nn > 0.5# the value of 0.5 is the threshold of the network to classify them
+    
+    u=1
+    for (i in prediction_nn_test){
+      
+      if (i=="FALSE"){prediction_nn_test[u]="Antagonistic"}
+      if( i=="TRUE"){prediction_nn_test[u]="Mutualistic"}
+      u=u+1
+    }
+    prediction_nn_test=as.data.frame(prediction_nn_test[,2])
+    prediction_nn_test$classif=data_empiric$Category[sample_test]
+    colnames(prediction_nn_test)=c("Prediction","Classification") #Classification = TRue category
+    
+    write.table(prediction_nn_test,paste0("./Data/5_nodes_only/NN_id_",ID,".csv"),sep=";")
+  }
+}
+
+Robustness_6_motifs=function(ID){
+  
+  load("./Data/network_BD.RData")
+  data_empiric = read.csv("./Data/data_BD.csv",sep=";")
+  data_empiric$Category=as.character(data_empiric$Category)
+  data_empiric$Category[which(data_empiric$Category=="Empirical antagonistic")]="Antagonistic"
+  data_empiric$Category[which(data_empiric$Category=="Empirical mutualistic")]="Mutualistic"
+  save2=data_empiric
+  
+  percentage_classif=rep(0,nrow(data_empiric))
+  presence=rep(0,nrow(data_empiric))
+  
+  
+  d_count=tibble()
+  
+  for (net in 1:length(Empirical_networks)){
+    motif_freq=as_tibble(t(as.matrix(mcount(as.matrix(Empirical_networks[[net]]),normalisation = F,mean_weight = F,standard_dev = F,six_node=T)%>%
+                                       filter(., nodes==6)%>%
+                                       mutate(., frequency=frequency/sum(frequency))%>%
+                                       dplyr::select(., frequency))))
+    colnames(motif_freq)=paste0("Motif_",18:44)
+    d_count=rbind(d_count,motif_freq%>%add_column(., Network_ID=net,Category=data_empiric$Category[net])%>%
+                    dplyr::relocate(., Category,.before="Motif_18")%>%
+                    dplyr::relocate(.,Network_ID,.after="Category"))
+  }
+  
+  data_empiric=d_count
+  save=data_empiric
+  nb_tours=1
+  for (b in sample(1:10000,nb_tours)){
+    data.test=NULL
+    data.train=NULL
+    set.seed(b)
+    sample_test = sample(1:nrow(data_empiric),size = 0.2*nrow(data_empiric),replace = F)
+    
+    
+    data.test = data_empiric[sample_test,]
+    data.train = data_empiric[-sample_test,]
+    data.train=rbind(data.train)
+    
+    
+    formule = as.formula(c('Category ~ ', paste0(colnames(data.train[, 3:length(data.train)]), collapse = "+"))) #classify networks according to the type
+    nn_1layer = neuralnet(formule,data.train,hidden = 60 , 
+                          stepmax = 10 ** 8,lifesign = 'full', 
+                          linear.output=F,rep=1) # number of max step to train
+    
+    prediction_nn = predict(nn_1layer, data.test[,3:length(data.test)])
+    prediction_nn_test = prediction_nn > 0.5# the value of 0.5 is the threshold of the network to classify them
+    
+    u=1
+    for (i in prediction_nn_test){
+      
+      if (i=="FALSE"){prediction_nn_test[u]="Antagonistic"}
+      if( i=="TRUE"){prediction_nn_test[u]="Mutualistic"}
+      u=u+1
+    }
+    prediction_nn_test=as.data.frame(prediction_nn_test[,2])
+    prediction_nn_test$classif=data_empiric$Category[sample_test]
+    colnames(prediction_nn_test)=c("Prediction","Classification") #Classification = TRue category
+    
+    write.table(prediction_nn_test,paste0("./Data/6_nodes_only/NN_id_",ID,".csv"),sep=";")
+  }
+}
+
+
+library(parallel)
+mclapply(1:80,Robustness_5_motifs,mc.cores = 10)
+mclapply(1:80,Robustness_6_motifs,mc.cores = 10)
+
+for (n_nodes in c(6)){
+  accuracy_classif=tibble()
+  for (k in list.files(paste0("./Data/",n_nodes,"_nodes_only/"))){
+    classif=read.table(paste0("./Data/",n_nodes,"_nodes_only/",k),sep=";")%>%
+      add_column(., ID=1:nrow(.))
+    table_classif=table(classif$Prediction,classif$Classification)
+    table_classif[2,]=table_classif[2,]/sum(table_classif[2,])
+    table_classif[1,]=table_classif[1,]/sum(table_classif[1,])
+    accuracy_classif=rbind(accuracy_classif,tibble(Antagonistic=table_classif[1,1],Mutualistic=table_classif[2,2],
+                                                   F_score_A=F1_Score(classif$Classification,classif$Prediction,"Mutualistic"),
+                                                   F_score_M=F1_Score(classif$Classification,classif$Prediction,"Antagonistic")))
+    
+  }
+  
+  # write.table(table_classif,paste0("./Figures/SI/Only_",5,".csv"),sep=";")
+}
+
+## >> Robustness: permutation type of ecology (Fig. S17) ----
+dir.create("./Data/Random_ecology/",showWarnings = F)
+
+
+Robustness_Random_ecology=function(ID){
+  
+  load("./Data/network_BD.RData")
+  data_empiric = read.csv("./Data/data_BD.csv",sep=";")[,c(1,2,108:151)]
+  data_empiric$Category=as.character(data_empiric$Category)
+  data_empiric$Category[which(data_empiric$Category=="Empirical antagonistic")]="Antagonistic"
+  data_empiric$Category[which(data_empiric$Category=="Empirical mutualistic")]="Mutualistic"
+  save=data_empiric
+  
+
+  set.seed(ID)
+  
+  #Randomization of types
+  data_empiric$Category=NA
+  sample_ecology=sample(unique(save$Type),4)
+  while(all(sapply(sample_ecology,function(x){return(x %in% c("Host-Parasite","Host-Parasitoid","Bacteria-Phage","Herbivory"))}))){ #to avoid similar links
+    sample_ecology=sample(unique(save$Type),4)
+  }
+  
+  data_empiric$Category[which(data_empiric$Type %in% sample_ecology)]="Antagonistic"
+  data_empiric$Category[is.na(data_empiric$Category)]="Mutualistic"
+  
+  n_not_good_cat=sum(table(data_empiric$Category,data_empiric$Type)[2,c("Host-Parasite","Host-Parasitoid","Bacteria-Phage","Herbivory")])+
+    sum(table(data_empiric$Category,data_empiric$Type)[1,c("Anemone-Fish","Mycorrhiza","Plant-Ant","Pollination","Seed dispersal")])
+  
+  save_classif=tibble()
+
+  nb_tours=50
+  for (b in sample(1:10000,nb_tours)){
+    
+    data.test=NULL
+    data.train=NULL
+    set.seed(b)
+    sample_test = sample(1:nrow(data_empiric),size = 0.2*nrow(data_empiric),replace = F)
+    
+    
+    data.test = data_empiric[sample_test,]
+    data.train = data_empiric[-sample_test,]
+    data.train=rbind(data.train)
+    
+    
+    formule = as.formula(c('Category ~ ', paste0(colnames(data.train[, 3:length(data.train)]), collapse = "+"))) #classify networks according to the type
+    nn_1layer = neuralnet(formule,data.train,hidden = 60 , 
+                          stepmax = 10 ** 8,lifesign = 'full', 
+                          linear.output=F,rep=1) # number of max step to train
+    
+    prediction_nn = predict(nn_1layer, data.test[,3:length(data.test)])
+    prediction_nn_test = prediction_nn > 0.5# the value of 0.5 is the threshold of the network to classify them
+    
+    u=1
+    for (i in prediction_nn_test){
+      
+      if (i=="FALSE"){prediction_nn_test[u]="Antagonistic"}
+      if( i=="TRUE"){prediction_nn_test[u]="Mutualistic"}
+      u=u+1
+    }
+    prediction_nn_test=as.data.frame(prediction_nn_test[,2])
+    prediction_nn_test$classif=data_empiric$Category[sample_test]
+    colnames(prediction_nn_test)=c("Prediction","Classification") #Classification = TRue category
+    
+    
+    table_predictions=table(prediction_nn_test[,1],data.test$Category)
+    
+    save_classif=rbind(save_classif,tibble(AA_classified_AA=table_predictions[1,1],
+                                           AA_classified_MM=table_predictions[2,1],
+                                           MM_classified_MM=table_predictions[2,2],
+                                           MM_classified_AA=table_predictions[1,2]))
+    
+  }
+  
+  write.table(save_classif,paste0("./Data/Random_ecology/Random_ecology_",ID,".csv"),sep=";")
+  write.table(n_not_good_cat,paste0("./Data/Random_ecology/N_bad_category_",ID,".csv"),sep=";")
+}
+
+mclapply(1:200,Robustness_Random_ecology,mc.cores = 40)
+
+
+accuracy_classif=N_network=tibble()
+for (k in list.files("./Data/Random_ecology/","Random")[1:200]){
+  classif=read.table(paste0("./Data/Random_ecology/",k),sep=";")
+  accuracy_classif=rbind(accuracy_classif,tibble(Antagonistic=colSums(classif)[1]/(sum(colSums(classif)[1:2])),
+                                                 Mutualistic=colSums(classif)[3]/(sum(colSums(classif)[3:4])),
+                                                 F_score_mut=mean(as.numeric(sapply(1:nrow(classif),function(x){
+                                                   return(F1(classif[x,]))
+                                                 }))),
+                                                 F_score_ant=mean(as.numeric(sapply(1:nrow(classif),function(x){
+                                                   return(F1(classif[x,],type = "ant"))
+                                                 })))))
+  
+  N_network=rbind(N_network,tibble(N_Anta=rowSums(classif[,1:2]),
+                                   N_Mutua=rowSums(classif[,3:4])))
+}
+
+n_not_good_cat=tibble()
+for (k in list.files("./Data/Random_ecology/","bad")[1:200]){
+  n_not_good_cat=rbind(n_not_good_cat,read.table(paste0("./Data/Random_ecology/",k),sep=";"))
+}
+
+
+p1=ggplot(accuracy_classif%>%
+            add_column(., ID=1:nrow(.),
+                       N_good_cat=abs(n_not_good_cat$x-345),
+                       "Mean % of correct classification"=apply(accuracy_classif[,1:2],1,mean,na.rm=T),
+                       "Mean F-score"=rowMeans(.[,3:4]))%>%
+            melt(.,measure.vars=c("Mean % of correct classification","Mean F-score")))+
+  geom_point(aes(x=N_good_cat,y=value),fill="gray",shape=21,size=2)+
+  geom_smooth(aes(x=N_good_cat,y=value),color="black")+
+  labs(x="# of networks with changed type of interaction",fill="",y="")+
+  scale_fill_manual(values=c('#DECF3F','#8fd175'))+
+  theme_classic()+
+  facet_wrap(.~variable,scales="free")+
+  theme(legend.position = "none",axis.text.x = element_text(size=14))
+
+
+
+
+p2=ggplot(accuracy_classif%>%
+            add_column(., ID=1:nrow(.),
+                       N_good_cat=abs(n_not_good_cat$x-345),
+                       "Difference % of correct classification between \n antagonistic and mutualistic networks"=abs(apply(accuracy_classif[,1:2],1,diff,na.rm=T)),
+                       "Difference in F-score between \n antagonistic and mutualistic networks"=abs(apply(accuracy_classif[,3:4],1,diff,na.rm=T)))%>%
+            melt(.,measure.vars=c("Difference % of correct classification between \n antagonistic and mutualistic networks","Difference in F-score between \n antagonistic and mutualistic networks")))+
+  geom_point(aes(x=N_good_cat,y=value),fill="gray",shape=21,size=2)+
+  geom_smooth(aes(x=N_good_cat,y=value),color="black")+
+  labs(x="# of networks with changed type of interaction",fill="",y="")+
+  scale_fill_manual(values=c('#DECF3F','#8fd175'))+
+  theme_classic()+
+  facet_wrap(.~variable,scales="free")+
+  theme(legend.position = "none",axis.text.x = element_text(size=14))
+
+ggsave("./Figures/SI/Robustness_type_ecology.pdf",ggarrange(p1,p2,nrow = 2,labels=letters[1:2]),width = 6,height = 8)
+
+
+
+
+
+## >> Distribution of % of classification in Table 1 (Fig. S18) ----
+
+
+confiance=read.table("./Figures/Data/data_Table_1.csv",sep=";")
+
+confiance$percentage=confiance$percentage*100
+confiance=confiance[order(confiance$category,-confiance$percentage),]
+confiance$number=c(1:table(confiance$category)[1],1:table(confiance$category)[2])
+confiance$classif_final=" " 
+
+p1=ggplot(confiance%>%mutate(., category=recode_factor(category,
+                                                       "Mutualistic"="Mutualistic networks",
+                                                       "Antagonistic"="Antagonistic networks")))+
+  geom_histogram(aes(x=percentage,fill=category))+
+  facet_wrap(.~category,scales = "free")+
+  scale_fill_manual(values=rev(c('#DECF3F','olivedrab3')))+
+  theme_classic()+
+  theme(legend.position = "none")+
+  labs(x="% of correct classification",y="Number of networks")+
+  geom_vline(xintercept = c(25,50,70),linetype=9)
+
+
+p2=ggplot(confiance%>%mutate(., category=recode_factor(category,
+                                                       "Mutualistic"="Mutualistic networks",
+                                                       "Antagonistic"="Antagonistic networks")))+
+  geom_histogram(aes(x=percentage,fill=type))+
+  facet_wrap(.~category,scales = "free")+
+  theme_classic()+
+  theme(legend.position = "bottom")+
+  labs(x="% of correct classification",y="Number of networks",fill="")+
+  geom_vline(xintercept = c(25,50,70),linetype=9)
+
+
+ggsave("./Figures/SI/Distribution_classification_percentages_Table1.pdf",
+       ggarrange(p1,p2,nrow=2,labels = letters[1:2]),width = 7,height = 8)
+
+
+# SI Tables ----
+## >> Table: AIC mixed effect models type of ecology (Table S1) ----
 
 
 # For connectance
@@ -1478,15 +2697,15 @@ mod_sum_dichotomy=lm(data=data_empiric,
 test_s=AIC(mod_sum_ecology,mod_sum_dichotomy_corrected,mod_sum_dichotomy)$AIC
 
 table_=data.frame(Dichotomy_corrected=c(test_n[2],test_c[2],test_m[2],test_d[2],test_s[2]),
-                    Interaction_type=c(test_n[1],test_c[1],test_m[1],test_d[1],test_s[1]),
-                    Dichotomy_uncorrected=c(test_n[3],test_c[3],test_m[3],test_d[3],test_s[3]));rownames(Table_S7)=c("Nestedness","Connectance","Modularity","Diff","Sum")
+                  Interaction_type=c(test_n[1],test_c[1],test_m[1],test_d[1],test_s[1]),
+                  Dichotomy_uncorrected=c(test_n[3],test_c[3],test_m[3],test_d[3],test_s[3]));rownames(Table_S7)=c("Nestedness","Connectance","Modularity","Diff","Sum")
 
 
 write.table(table_,"./Figures/SI/AIC_global_metrics.csv",sep=";")
 
 
 
-## >> Methods for classifying empirical network ----
+## >> Methods for classifying empirical network  ----
 
 
 
@@ -1577,8 +2796,8 @@ for (m in combination){
     y_train=category[train]
     
     cv_output=cv.glmnet(x_train, y_train,
-                           alpha = 1, lambda = lambda_seq, 
-                           nfolds = 5,family="binomial")
+                        alpha = 1, lambda = lambda_seq, 
+                        nfolds = 5,family="binomial")
     
     # identifying best lambda
     best_lam=cv_output$lambda.min
@@ -1590,8 +2809,8 @@ for (m in combination){
     
     # Rebuilding the model with best lambda value identified
     lasso_best=glmnet(mod_lasso[train,], category[train], 
-                         alpha = 1,
-                         lambda = best_lam,family="binomial")
+                      alpha = 1,
+                      lambda = best_lam,family="binomial")
     pred=predict(lasso_best, s = best_lam, newx = x_test)
     pred=pred>0
     pred[which(pred==F)]="Antagonistic"
@@ -1685,7 +2904,370 @@ write.table(results_NN,"./Figures/SI/results_NN.csv",sep=";")
 
 
 
-## >> Classifying empirical networks using simulations ----
+## >> Global classification without one ecology (Table S7A) ----
+
+data_empiric=save
+
+MM=NULL 
+AA=NULL
+k=1
+Name=NULL
+
+for (p in names(table(value2$Type))){  
+  g=1
+  aa=NULL
+  mm=NULL
+  value2=save[,c(1,2,108:151)]
+  value2$Type=as.character(value2$Type)
+  value2=value2[-which(value2$Type==p),]
+  for (i in 1:50){
+    set.seed(sample(1:10000,1))
+    sample_test = sample(1:nrow(value2),#nrow = nombre total de r?seaux simul?s
+                         size = 0.2*nrow(value2),
+                         replace = F)
+    data.test=value2[sample_test,]
+    data.train=value2[-sample_test,]
+    
+    
+    #Training the neural network
+    formule = as.formula(c('Category ~ ', paste0(colnames(data.test[, 3:length(data.test)]), collapse = "+"))) #classify networks according to the type
+    nn_1layer = neuralnet(formule,
+                          data.train,
+                          hidden = 20 , # hidden = (output+input)/2 max= Nsample/(2(output+input))
+                          stepmax = 10 ** 8,lifesign = 'full', linear.output=F,rep=1) # number of max step to train
+    
+    #Test the neural network
+    prediction_nn=predict(nn_1layer, data.test[, 3:length(data.test)])
+    prediction_nn_test=prediction_nn > 0.5# the value of 0.5 is the threshold of the network to classify them
+    
+    u=1
+    for (i in prediction_nn_test){
+      
+      if (i=="FALSE"){prediction_nn_test[u]="Antagonistic"}
+      if( i=="TRUE"){prediction_nn_test[u]="Mutualistic"}
+      u=u+1
+    }
+    
+    results = table(data.test$Category, prediction_nn_test[,2])  
+    aa[g]=results[1]/(results[3]+results[1])*100
+    mm[g]=results[4]/(results[2]+results[4])*100
+    
+    g=g+1
+  }
+  AA[k]=paste0(mean(na.omit(aa))," +/- ", sd(na.omit(aa)))
+  MM[k]=paste0(mean(na.omit(mm))," +/- ", sd(na.omit(mm)))
+  Name[k]=p
+  k=k+1
+}
+results_S5A=data.frame(aa=AA,mm=MM,name=Name)
+
+write.table(results_S5A,"./Figures/SI/Table_without_ecology.csv",sep=";")
+
+
+
+
+## >> Classification of the excluded network (Table S7B)----
+
+
+
+#Part 1 : Classification accuracy of the excluded networks
+classif_accuracy=NULL
+n=1
+name=NULL
+for (p in names(table(save$Type))[-1]){  
+  classif=NULL
+  g=1
+  for (k in 1:50){
+    value2=save[,c(1,2,108:151)]
+    value2$Category=as.character(value2$Category)
+    value2$Type=as.character(value2$Type)
+    
+    set.seed(k)
+    
+    data.test=value2[which(value2$Type==p),]
+    data.train=value2[-which(value2$Type==p),]
+    data.train=data.train[sample(1:dim(data.train)[1],0.8*dim(data.train)[1]),]
+    
+    
+    
+    #Training the neural network
+    formule = as.formula(c('Category ~ ', paste0(colnames(data.test[, 3:length(data.test)]), collapse = "+"))) #classify networks according to the type
+    nn_1layer = neuralnet(formule,
+                          data.train,
+                          hidden = 20 , 
+                          stepmax = 10 ** 8,lifesign = 'full', linear.output=F,rep=1) 
+    
+    #Test the neural network
+    prediction_nn=predict(nn_1layer, data.test[, 3:length(data.test)])
+    
+    prediction_nn_test=prediction_nn > 0.5# the value of 0.5 is the threshold of the network to classify them
+    
+    u=1
+    for (i in prediction_nn_test){
+      
+      if (i=="FALSE"){prediction_nn_test[u]="Antagonistic"}
+      if( i=="TRUE"){prediction_nn_test[u]="Mutualistic"}
+      u=u+1
+    }
+    
+    results = table(data.test$Type, prediction_nn_test[,2])  
+    
+    
+    classif[k]  = ifelse(dim(results)[2]==1,1,results[,unique(save$Category[which(save$Type==p)])]/sum(results))
+    g=g+1
+  }
+  name[n]=p
+  classif_accuracy[n]=paste0(mean(na.omit(classif))," +/- ", sd(na.omit(classif)))
+  n=n+1
+}
+results=data.frame('Classif_accuracy'=classif_accuracy,name=name)
+write.table(results,"./Figures/SI/Table_excluded_network.csv",sep=";")
+
+#Part 2: Classification accuracy with all the networks in the training
+
+original_classif=read.table("./Figures/data_Table_1.csv",sep=";")
+complementary=unlist(lapply(original_classif$category,function(x){
+  ifelse(x=="Mutualistic","Antagonistic","Mutualistic")
+}))
+
+original_classif$final_classif=unlist(lapply(1:nrow(original_classif),function(x){
+  ifelse(original_classif$percentage[x]>.5,original_classif$category[x],complementary[x])
+}))
+
+
+tab=table(original_classif$type,original_classif$final_classif)
+original_result=c()
+for (i in 1:nrow(tab)){
+  original_result=c(original_result,
+                    ifelse(unique(original_classif$category[which(original_classif$type==rownames(tab)[i])])=="Mutualistic",
+                           tab[i,][2]/sum(tab[i,]),tab[i,][1]/sum(tab[i,])))
+}
+
+results=data.frame('Classification_accuracy'=original_result,name=rownames(tab))
+
+write.table(results,"./Figures/SI/Table_total_robustness_fig.csv",sep=";")
+
+
+
+
+## >> Overfitting in Lasso and Probit regression  ----
+
+#******************************************************************************#
+
+# testing overfitting with Lasso regression
+
+data_bdd=save[,c(1,2,108:151)]
+
+
+MM=NULL
+AA=NULL
+g=1
+for (b in sample(1:10000,50)){
+  
+  set.seed(b)
+  
+  formule = as.formula(c('Category ~ ',
+                         paste0(colnames(data_bdd[, 3:length(data_bdd)]),
+                                collapse = "+"))) 
+  
+  
+  mod_lasso=model.matrix(formule, data_bdd)
+  category=data_bdd$Category
+  lambda_seq=10^seq(2, -2, by = -.1)
+  
+  # Splitting the data into test and train. Only using matrix and no data frame
+  train = sample(1:nrow(mod_lasso), 4*nrow(mod_lasso)/5)
+  
+  x_train=mod_lasso[train,]
+  y_train=category[train]
+  
+  cv_output=cv.glmnet(x_train, y_train,
+                      alpha = 1, lambda = lambda_seq, 
+                      nfolds = 5,family="binomial")
+  
+  # identifying best lambda
+  best_lam=cv_output$lambda.min
+  
+  
+  
+  
+  x_test = mod_lasso[train,]
+  y_test = category[train]
+  
+  # Rebuilding the model with best lambda value identified
+  lasso_best=glmnet(mod_lasso[train,], category[train], 
+                    alpha = 1,
+                    lambda = best_lam,family="binomial")
+  pred=predict(lasso_best, s = best_lam, newx = x_test)
+  pred=pred>0
+  pred[which(pred==F)]="Antagonistic"
+  pred[which(pred==T)]="Mutualistic"
+  
+  results=table(y_test, pred)
+  
+  AA[g]=results[1]/(results[3]+results[1])*100
+  MM[g]=results[4]/(results[2]+results[4])*100
+  
+  g=g+1
+}
+lasso_result=data.frame(MM=paste0(mean(MM),"+/-",sd(MM)),
+                        AA=paste0(mean(AA),"+/-",sd(AA)),
+                        MA=paste0(100-mean(MM),"+/-",sd(MM)),
+                        AM=paste0(100-mean(AA),"+/-",sd(AA)))
+
+write.table(lasso_result,"./Figures/SI/Overfitting_Lasso.csv",sep=";")
+
+# testing overfitting with logit regression
+
+data_bdd=save
+
+
+MM=NULL
+AA=NULL
+aa=NULL
+mm=NULL
+g=1
+for (b in sample(1:10000,50)){
+  
+  set.seed(b)
+  
+  
+  sample_train = sample(1:nrow(data_bdd), 4*nrow(data_bdd)/5)
+  train=data_bdd[sample_train,]
+  test=data_bdd[-sample_train,]
+  
+  formule = as.formula(c('Category ~ ',
+                         paste0(colnames(data_bdd[, 3:length(data_bdd)]),
+                                collapse = "+"))) 
+  
+  res.glm=glm(formula=formule,family =binomial,data=train)
+  
+  
+  pred=predict.glm(res.glm,newdata=train,type="response")
+  pred=pred > 0.5# the value of 0.5 is the threshold of the network to classify them
+  
+  u=1
+  for (i in pred){
+    
+    if (i=="FALSE"){pred[u]="Antagonistic"}
+    if( i=="TRUE"){pred[u]="Mutualistic"}
+    u=u+1
+  }
+  results=table(train$Category,pred)
+  
+  
+  AA[g]=results[1]/(results[3]+results[1])*100
+  MM[g]=results[4]/(results[2]+results[4])*100
+  
+  g=g+1
+}
+probit_result=data.frame(MM=paste0(mean(MM),"+/-",sd(MM)),
+                         AA=paste0(mean(AA),"+/-",sd(AA)),
+                         MA=paste0(100-mean(MM),"+/-",sd(MM)),
+                         AM=paste0(100-mean(AA),"+/-",sd(AA)))
+
+write.table(probit_result,"./Figures/SI/Overfitting_probit.csv",sep=";")
+
+
+
+
+
+
+# adding the post hoc tests
+
+
+data_empiric=data_empiric[-which(data_empiric$Type %in% c("Anemone-Fish","Plant-Ant")),]
+write.table(as.data.frame(TukeyHSD(aov(Connectance ~ Type, data=data_empiric))$Type),"./Figures/SI/Post_hoc_Connectance_type_ecology.csv",sep=";")
+write.table(as.data.frame(TukeyHSD(aov(Nestedness ~ Type, data=data_empiric))$Type),"./Figures/SI/Post_hoc_Nestedness_type_ecology.csv",sep=";")
+write.table(as.data.frame(TukeyHSD(aov(Modularity ~ Type, data=data_empiric))$Type),"./Figures/SI/Post_hoc_Modularity_type_ecology.csv",sep=";")
+
+
+
+
+## >> Classification of bipartiteevol networks (Table S8a) ----
+
+
+#BIPARTITEEVOL SIMULATIONS
+
+data_BipartiteEvol=read.table("./Data/data_BipartiteEvol.csv",sep=";")[,c(1,105:148)]
+data_BipartiteEvol$Category=as.character(data_BipartiteEvol$Category)
+data_BipartiteEvol$Category[which(data_BipartiteEvol$Category=="BipartiteEvol Antagonistic")]="Antagonistic"
+data_BipartiteEvol$Category[which(data_BipartiteEvol$Category=="BipartiteEvol Antagonistic")]="Mutualistic"
+
+aa=NULL
+mm=NULL
+AA=NULL
+MM=NULL
+g=1
+
+
+for (k in 1:50){
+  
+  #Create 2 groups, one for training neural networks and one for test
+  data.test=NULL
+  data.train=NULL
+  set.seed(sample(1:100000,1))
+  
+  sample_test = sample(1:nrow(data_BipartiteEvol),#nrow = nombre total de r?seaux simul?s
+                       size = 0.2*nrow(data_BipartiteEvol),
+                       replace = F)
+  data.test = data_BipartiteEvol[sample_test,]
+  data.train = data_BipartiteEvol[-sample_test,]
+  
+  
+  #Training the neural network
+  formule = as.formula(c('Category ~ ', paste0(colnames(data.train[, 2:length(data.train)]), collapse = "+"))) #classify networks according to the type
+  nn_1layer = neuralnet(formule,
+                        data.train,
+                        hidden = 40 , # hidden = (output+input)/2 max= Nsample/(2(output+input))
+                        stepmax = 10 ** 8,lifesign = 'full', linear.output=F,rep=1) # number of max step to train
+  
+  #Test the neural network
+  prediction_nn = predict(nn_1layer, data.test[, 2:length(data.test)])
+  prediction_nn_test = prediction_nn > 0.5# the value of 0.5 is the threshold of the network to classify them
+  
+  u=1
+  for (i in prediction_nn_test){
+    
+    if (i=="FALSE"){prediction_nn_test[u]="Antagonistic"}
+    if( i=="TRUE"){prediction_nn_test[u]="Mutualistic"}
+    u=u+1
+  }
+  
+  results1 = table(data.test$Category, prediction_nn_test[,2])  
+  
+  aa[g]=results1[1]/(results1[3]+results1[1])*100
+  mm[g]=results1[4]/(results1[2]+results1[4])*100
+  
+  data.test=data_empiric
+  
+  prediction_nn = predict(nn_1layer, data.test[, 2:length(data.test)])
+  prediction_nn_test = prediction_nn > 0.5# the value of 0.5 is the threshold of the network to classify them
+  
+  u=1
+  for (i in prediction_nn_test){
+    
+    if (i=="FALSE"){prediction_nn_test[u]="Antagonistic"}
+    if( i=="TRUE"){prediction_nn_test[u]="Mutualistic"}
+    u=u+1
+  }
+  
+  results2 = table(data.test$Category, prediction_nn_test[,2])  
+  AA[g]=results2[1]/(results2[3]+results2[1])*100
+  MM[g]=results2[4]/(results2[2]+results2[4])*100
+  g=g+1
+}
+
+final_results_BipartiteEvol=data.frame(Simulations=rbind(paste0("Classification of Mutualistic : ",mean(mm)," +/- ",sd(mm)), 
+                                                         paste0('Classification of Antagonistic : ',mean(aa)," +/- ",sd(aa))),
+                                       Empiric=rbind(paste0("Classification of Mutualistic : ",mean(MM)," +/- ",sd(MM)), 
+                                                     paste0('Classification of Antagonistic : ',mean(AA)," +/- ",sd(AA))))
+
+write.table(final_results_BipartiteEvol,"./Figures/SI/Classif_with_bipartiteevol.csv",sep=";")
+
+
+
+## >> Classifying empirical networks using simulations (Table S8b) ----
 
 
 # >>> Probit classification
@@ -1812,8 +3394,8 @@ for (v in c("BipartiteEvol_simulations")){
       y_train=category[train]
       
       cv_output=cv.glmnet(x_train, y_train,
-                             alpha = 1, lambda = lambda_seq, 
-                             nfolds = 5,family="binomial")
+                          alpha = 1, lambda = lambda_seq, 
+                          nfolds = 5,family="binomial")
       
       # identifying best lambda
       best_lam=cv_output$lambda.min
@@ -1825,8 +3407,8 @@ for (v in c("BipartiteEvol_simulations")){
       
       # Rebuilding the model with best lambda value identified
       lasso_best=glmnet(mod_lasso[train,], category[train], 
-                           alpha = 1,
-                           lambda = best_lam,family="binomial")
+                        alpha = 1,
+                        lambda = best_lam,family="binomial")
       pred=predict(lasso_best, s = best_lam, newx = x_test)
       pred=pred>0
       pred[which(pred==F)]="Antagonistic"
@@ -1972,833 +3554,9 @@ for (v in c("BipartiteEvol_simulations")){
 
 
 
-## >> Table : Global classification without one ecology ----
 
-data_empiric=save
 
-MM=NULL 
-AA=NULL
-k=1
-Name=NULL
-
-for (p in names(table(value2$Type))){  
-  g=1
-  aa=NULL
-  mm=NULL
-  value2=save[,c(1,2,108:151)]
-  value2$Type=as.character(value2$Type)
-  value2=value2[-which(value2$Type==p),]
-  for (i in 1:50){
-    set.seed(sample(1:10000,1))
-    sample_test = sample(1:nrow(value2),#nrow = nombre total de r?seaux simul?s
-                         size = 0.2*nrow(value2),
-                         replace = F)
-    data.test=value2[sample_test,]
-    data.train=value2[-sample_test,]
-    
-    
-    #Training the neural network
-    formule = as.formula(c('Category ~ ', paste0(colnames(data.test[, 3:length(data.test)]), collapse = "+"))) #classify networks according to the type
-    nn_1layer = neuralnet(formule,
-                          data.train,
-                          hidden = 20 , # hidden = (output+input)/2 max= Nsample/(2(output+input))
-                          stepmax = 10 ** 8,lifesign = 'full', linear.output=F,rep=1) # number of max step to train
-    
-    #Test the neural network
-    prediction_nn=predict(nn_1layer, data.test[, 3:length(data.test)])
-    prediction_nn_test=prediction_nn > 0.5# the value of 0.5 is the threshold of the network to classify them
-    
-    u=1
-    for (i in prediction_nn_test){
-      
-      if (i=="FALSE"){prediction_nn_test[u]="Antagonistic"}
-      if( i=="TRUE"){prediction_nn_test[u]="Mutualistic"}
-      u=u+1
-    }
-    
-    results = table(data.test$Category, prediction_nn_test[,2])  
-    aa[g]=results[1]/(results[3]+results[1])*100
-    mm[g]=results[4]/(results[2]+results[4])*100
-    
-    g=g+1
-  }
-  AA[k]=paste0(mean(na.omit(aa))," +/- ", sd(na.omit(aa)))
-  MM[k]=paste0(mean(na.omit(mm))," +/- ", sd(na.omit(mm)))
-  Name[k]=p
-  k=k+1
-}
-results_S5A=data.frame(aa=AA,mm=MM,name=Name)
-
-write.table(results_S5A,"./Figures/SI/Table_without_ecology.csv",sep=";")
-
-
-
-
-## >> Classification of the excluded network ----
-
-
-
-#Part 1 : Classification accuracy of the excluded networks
-classif_accuracy=NULL
-n=1
-name=NULL
-for (p in names(table(save$Type))[-1]){  
-  classif=NULL
-  g=1
-  for (k in 1:50){
-    value2=save[,c(1,2,108:151)]
-    value2$Category=as.character(value2$Category)
-    value2$Type=as.character(value2$Type)
-    
-    set.seed(k)
-    
-    data.test=value2[which(value2$Type==p),]
-    data.train=value2[-which(value2$Type==p),]
-    data.train=data.train[sample(1:dim(data.train)[1],0.8*dim(data.train)[1]),]
-    
-    
-    
-    #Training the neural network
-    formule = as.formula(c('Category ~ ', paste0(colnames(data.test[, 3:length(data.test)]), collapse = "+"))) #classify networks according to the type
-    nn_1layer = neuralnet(formule,
-                          data.train,
-                          hidden = 20 , 
-                          stepmax = 10 ** 8,lifesign = 'full', linear.output=F,rep=1) 
-    
-    #Test the neural network
-    prediction_nn=predict(nn_1layer, data.test[, 3:length(data.test)])
-    
-    prediction_nn_test=prediction_nn > 0.5# the value of 0.5 is the threshold of the network to classify them
-    
-    u=1
-    for (i in prediction_nn_test){
-      
-      if (i=="FALSE"){prediction_nn_test[u]="Antagonistic"}
-      if( i=="TRUE"){prediction_nn_test[u]="Mutualistic"}
-      u=u+1
-    }
-    
-    results = table(data.test$Type, prediction_nn_test[,2])  
-    
-    
-    classif[k]  = ifelse(dim(results)[2]==1,1,results[,unique(save$Category[which(save$Type==p)])]/sum(results))
-    g=g+1
-  }
-  name[n]=p
-  classif_accuracy[n]=paste0(mean(na.omit(classif))," +/- ", sd(na.omit(classif)))
-  n=n+1
-}
-results=data.frame('Classif_accuracy'=classif_accuracy,name=name)
-write.table(results,"./Figures/SI/Table_excluded_network.csv",sep=";")
-
-#Part 2: Classification accuracy with all the networks in the training
-
-original_classif=read.table("./Figures/data_Table_1.csv",sep=";")
-complementary=unlist(lapply(original_classif$category,function(x){
-  ifelse(x=="Mutualistic","Antagonistic","Mutualistic")
-}))
-
-original_classif$final_classif=unlist(lapply(1:nrow(original_classif),function(x){
-  ifelse(original_classif$percentage[x]>.5,original_classif$category[x],complementary[x])
-}))
-
-
-tab=table(original_classif$type,original_classif$final_classif)
-original_result=c()
-for (i in 1:nrow(tab)){
-  original_result=c(original_result,
-                    ifelse(unique(original_classif$category[which(original_classif$type==rownames(tab)[i])])=="Mutualistic",
-                           tab[i,][2]/sum(tab[i,]),tab[i,][1]/sum(tab[i,])))
-}
-
-results=data.frame('Classification_accuracy'=original_result,name=rownames(tab))
-
-write.table(results,"./Figures/SI/Table_total_robustness_fig.csv",sep=";")
-
-
-
-
-## >> Overfitting in Lasso and Probit regression ----
-
-#******************************************************************************#
-
-# testing overfitting with Lasso regression
-
-data_bdd=save[,c(1,2,108:151)]
-
-
-MM=NULL
-AA=NULL
-g=1
-for (b in sample(1:10000,50)){
-  
-  set.seed(b)
-  
-  formule = as.formula(c('Category ~ ',
-                         paste0(colnames(data_bdd[, 3:length(data_bdd)]),
-                                collapse = "+"))) 
-  
-  
-  mod_lasso=model.matrix(formule, data_bdd)
-  category=data_bdd$Category
-  lambda_seq=10^seq(2, -2, by = -.1)
-  
-  # Splitting the data into test and train. Only using matrix and no data frame
-  train = sample(1:nrow(mod_lasso), 4*nrow(mod_lasso)/5)
-  
-  x_train=mod_lasso[train,]
-  y_train=category[train]
-  
-  cv_output=cv.glmnet(x_train, y_train,
-                         alpha = 1, lambda = lambda_seq, 
-                         nfolds = 5,family="binomial")
-  
-  # identifying best lambda
-  best_lam=cv_output$lambda.min
-  
-  
-  
-  
-  x_test = mod_lasso[train,]
-  y_test = category[train]
-  
-  # Rebuilding the model with best lambda value identified
-  lasso_best=glmnet(mod_lasso[train,], category[train], 
-                       alpha = 1,
-                       lambda = best_lam,family="binomial")
-  pred=predict(lasso_best, s = best_lam, newx = x_test)
-  pred=pred>0
-  pred[which(pred==F)]="Antagonistic"
-  pred[which(pred==T)]="Mutualistic"
-  
-  results=table(y_test, pred)
-  
-  AA[g]=results[1]/(results[3]+results[1])*100
-  MM[g]=results[4]/(results[2]+results[4])*100
-  
-  g=g+1
-}
-lasso_result=data.frame(MM=paste0(mean(MM),"+/-",sd(MM)),
-                        AA=paste0(mean(AA),"+/-",sd(AA)),
-                        MA=paste0(100-mean(MM),"+/-",sd(MM)),
-                        AM=paste0(100-mean(AA),"+/-",sd(AA)))
-
-write.table(lasso_result,"./Figures/SI/Overfitting_Lasso.csv",sep=";")
-
-# testing overfitting with logit regression
-
-data_bdd=save
-
-
-MM=NULL
-AA=NULL
-aa=NULL
-mm=NULL
-g=1
-for (b in sample(1:10000,50)){
-  
-  set.seed(b)
-  
-  
-  sample_train = sample(1:nrow(data_bdd), 4*nrow(data_bdd)/5)
-  train=data_bdd[sample_train,]
-  test=data_bdd[-sample_train,]
-  
-  formule = as.formula(c('Category ~ ',
-                         paste0(colnames(data_bdd[, 3:length(data_bdd)]),
-                                collapse = "+"))) 
-  
-  res.glm=glm(formula=formule,family =binomial,data=train)
-  
-  
-  pred=predict.glm(res.glm,newdata=train,type="response")
-  pred=pred > 0.5# the value of 0.5 is the threshold of the network to classify them
-  
-  u=1
-  for (i in pred){
-    
-    if (i=="FALSE"){pred[u]="Antagonistic"}
-    if( i=="TRUE"){pred[u]="Mutualistic"}
-    u=u+1
-  }
-  results=table(train$Category,pred)
-  
-  
-  AA[g]=results[1]/(results[3]+results[1])*100
-  MM[g]=results[4]/(results[2]+results[4])*100
-  
-  g=g+1
-}
-probit_result=data.frame(MM=paste0(mean(MM),"+/-",sd(MM)),
-                         AA=paste0(mean(AA),"+/-",sd(AA)),
-                         MA=paste0(100-mean(MM),"+/-",sd(MM)),
-                         AM=paste0(100-mean(AA),"+/-",sd(AA)))
-
-write.table(probit_result,"./Figures/SI/Overfitting_probit.csv",sep=";")
-
-
-
-
-
-
-# adding the post hoc tests
-
-
-data_empiric=data_empiric[-which(data_empiric$Type %in% c("Anemone-Fish","Plant-Ant")),]
-write.table(as.data.frame(TukeyHSD(aov(Connectance ~ Type, data=data_empiric))$Type),"./Figures/SI/Post_hoc_Connectance_type_ecology.csv",sep=";")
-write.table(as.data.frame(TukeyHSD(aov(Nestedness ~ Type, data=data_empiric))$Type),"./Figures/SI/Post_hoc_Nestedness_type_ecology.csv",sep=";")
-write.table(as.data.frame(TukeyHSD(aov(Modularity ~ Type, data=data_empiric))$Type),"./Figures/SI/Post_hoc_Modularity_type_ecology.csv",sep=";")
-
-
-
-
-## >> Classification of empirical networks using simulated networks ----
-
-
-#BIPARTITEEVOL SIMULATIONS
-
-data_BipartiteEvol=read.table("./Data/data_BipartiteEvol.csv",sep=";")[,c(1,105:148)]
-data_BipartiteEvol$Category=as.character(data_BipartiteEvol$Category)
-data_BipartiteEvol$Category[which(data_BipartiteEvol$Category=="BipartiteEvol Antagonistic")]="Antagonistic"
-data_BipartiteEvol$Category[which(data_BipartiteEvol$Category=="BipartiteEvol Antagonistic")]="Mutualistic"
-
-aa=NULL
-mm=NULL
-AA=NULL
-MM=NULL
-g=1
-
-
-for (k in 1:50){
-  
-  #Create 2 groups, one for training neural networks and one for test
-  data.test=NULL
-  data.train=NULL
-  set.seed(sample(1:100000,1))
-  
-  sample_test = sample(1:nrow(data_BipartiteEvol),#nrow = nombre total de r?seaux simul?s
-                       size = 0.2*nrow(data_BipartiteEvol),
-                       replace = F)
-  data.test = data_BipartiteEvol[sample_test,]
-  data.train = data_BipartiteEvol[-sample_test,]
-  
-  
-  #Training the neural network
-  formule = as.formula(c('Category ~ ', paste0(colnames(data.train[, 2:length(data.train)]), collapse = "+"))) #classify networks according to the type
-  nn_1layer = neuralnet(formule,
-                        data.train,
-                        hidden = 40 , # hidden = (output+input)/2 max= Nsample/(2(output+input))
-                        stepmax = 10 ** 8,lifesign = 'full', linear.output=F,rep=1) # number of max step to train
-  
-  #Test the neural network
-  prediction_nn = predict(nn_1layer, data.test[, 2:length(data.test)])
-  prediction_nn_test = prediction_nn > 0.5# the value of 0.5 is the threshold of the network to classify them
-  
-  u=1
-  for (i in prediction_nn_test){
-    
-    if (i=="FALSE"){prediction_nn_test[u]="Antagonistic"}
-    if( i=="TRUE"){prediction_nn_test[u]="Mutualistic"}
-    u=u+1
-  }
-  
-  results1 = table(data.test$Category, prediction_nn_test[,2])  
-  
-  aa[g]=results1[1]/(results1[3]+results1[1])*100
-  mm[g]=results1[4]/(results1[2]+results1[4])*100
-  
-  data.test=data_empiric
-  
-  prediction_nn = predict(nn_1layer, data.test[, 2:length(data.test)])
-  prediction_nn_test = prediction_nn > 0.5# the value of 0.5 is the threshold of the network to classify them
-  
-  u=1
-  for (i in prediction_nn_test){
-    
-    if (i=="FALSE"){prediction_nn_test[u]="Antagonistic"}
-    if( i=="TRUE"){prediction_nn_test[u]="Mutualistic"}
-    u=u+1
-  }
-  
-  results2 = table(data.test$Category, prediction_nn_test[,2])  
-  AA[g]=results2[1]/(results2[3]+results2[1])*100
-  MM[g]=results2[4]/(results2[2]+results2[4])*100
-  g=g+1
-}
-
-final_results_BipartiteEvol=data.frame(Simulations=rbind(paste0("Classification of Mutualistic : ",mean(mm)," +/- ",sd(mm)), 
-                                           paste0('Classification of Antagonistic : ',mean(aa)," +/- ",sd(aa))),
-                         Empiric=rbind(paste0("Classification of Mutualistic : ",mean(MM)," +/- ",sd(MM)), 
-                                       paste0('Classification of Antagonistic : ',mean(AA)," +/- ",sd(AA))))
-
-write.table(final_results_BipartiteEvol,"./Figures/SI/Classif_with_bipartiteevol.csv",sep=";")
-
-
-
-## >> Robustness: network permutation ----
-
-n_time_perm=200
-d=tibble()
-
-Permute_network_classification_permaswap=function(ID){
-  
-  save_classif=tibble()
-  
-  #randomize each network while keeping degree and connectance fixed
-  list_net=lapply(1:length(Empirical_networks),function(x){
-    return(permatswap(Empirical_networks[[x]],
-                      method = "quasiswap", fixedmar="both", shuffle = "both",
-                      strata = NULL, mtype = "count", times = 1)$perm[[1]])
-    # return(shuffle.web(Empirical_networks[[x]],1)[[1]])
-  })
-  
-  
-  # Compute motif frequency
-  d_count=tibble()
-  
-  for (net in 1:length(list_net)){
-    motif_freq=as_tibble(t(mcount(list_net[[net]],six_node = T,normalisation = T,mean_weight = F,standard_dev = F)$normalise_sum))
-    colnames(motif_freq)=colnames(motif_freq)=paste0("Motif_",1:44)
-    d_count=rbind(d_count,motif_freq%>%add_column(., Network_ID=net,Category=save$Category[net])%>%
-                    dplyr::relocate(., Category,.before="Motif_1")%>%
-                    dplyr::relocate(.,Network_ID,.after="Category"))
-  }
-  
-  
-  nb_NN=50
-  for (b in sample(1:10000,nb_NN)){
-    
-    set.seed(b)
-    sample_test = sample(1:nrow(d_count),size = 0.2*nrow(d_count),replace = F)
-    
-    
-    data.test = d_count[sample_test,]
-    data.train = d_count[-sample_test,]
-    
-    formule = as.formula(c('Category ~ ', paste0(colnames(data.train[, 3:length(data.train)]), collapse = "+"))) #classify networks according to the type
-    nn_1layer = neuralnet(formule,data.train,hidden = 60 , 
-                          stepmax = 10 ** 8,lifesign = 'full', 
-                          linear.output=F,rep=1) # number of max step to train
-    
-    prediction_nn = predict(nn_1layer, data.test[,3:length(data.test)])
-    prediction_nn_test = prediction_nn > 0.5# the value of 0.5 is the threshold of the network to classify them
-    
-    u=1
-    for (i in prediction_nn_test){
-      
-      if (i=="FALSE"){prediction_nn_test[u]="Antagonistic"}
-      if( i=="TRUE"){prediction_nn_test[u]="Mutualistic"}
-      u=u+1
-    }
-    prediction_nn_test=as.data.frame(prediction_nn_test[,2])
-    table_predictions=table(prediction_nn_test[,1],data.test$Category)
-    
-    save_classif=rbind(save_classif,tibble(AA_classified_AA=table_predictions[1,1],
-                                           AA_classified_MM=table_predictions[2,1],
-                                           MM_classified_MM=table_predictions[2,2],
-                                           MM_classified_AA=table_predictions[1,2]))
-  }
-  
-  write.table(paste0("../Data/Permutations/Perm_perma_",ID,".csv"),sep=";")
-  
-  
-}
-
-Permute_network_classification_shuffleweb=function(ID){
-  
-  save_classif=tibble()
-  
-  #randomize each network while keeping degree and connectance fixed
-  list_net=lapply(1:length(Empirical_networks),function(x){
-    # return(permatswap(Empirical_networks[[x]],
-    #                   method = "quasiswap", fixedmar="both", shuffle = "both",
-    #                   strata = NULL, mtype = "count", times = 1)$perm[[1]])
-    return(shuffle.web(Empirical_networks[[x]],1)[[1]])
-  })
-  
-  
-  # Compute motif frequency
-  d_count=tibble()
-  
-  for (net in 1:length(list_net)){
-    motif_freq=as_tibble(t(mcount(list_net[[net]],six_node = T,normalisation = T,mean_weight = F,standard_dev = F)$normalise_sum))
-    colnames(motif_freq)=colnames(motif_freq)=paste0("Motif_",1:44)
-    d_count=rbind(d_count,motif_freq%>%add_column(., Network_ID=net,Category=save$Category[net])%>%
-                    dplyr::relocate(., Category,.before="Motif_1")%>%
-                    dplyr::relocate(.,Network_ID,.after="Category"))
-  }
-  
-  
-  nb_NN=50
-  for (b in sample(1:10000,nb_NN)){
-    
-    set.seed(b)
-    sample_test = sample(1:nrow(d_count),size = 0.2*nrow(d_count),replace = F)
-    
-    
-    data.test = d_count[sample_test,]
-    data.train = d_count[-sample_test,]
-    
-    formule = as.formula(c('Category ~ ', paste0(colnames(data.train[, 3:length(data.train)]), collapse = "+"))) #classify networks according to the type
-    nn_1layer = neuralnet(formule,data.train,hidden = 60 , 
-                          stepmax = 10 ** 8,lifesign = 'full', 
-                          linear.output=F,rep=1) # number of max step to train
-    
-    prediction_nn = predict(nn_1layer, data.test[,3:length(data.test)])
-    prediction_nn_test = prediction_nn > 0.5# the value of 0.5 is the threshold of the network to classify them
-    
-    u=1
-    for (i in prediction_nn_test){
-      
-      if (i=="FALSE"){prediction_nn_test[u]="Antagonistic"}
-      if( i=="TRUE"){prediction_nn_test[u]="Mutualistic"}
-      u=u+1
-    }
-    prediction_nn_test=as.data.frame(prediction_nn_test[,2])
-    table_predictions=table(prediction_nn_test[,1],data.test$Category)
-    
-    save_classif=rbind(save_classif,tibble(AA_classified_AA=table_predictions[1,1],
-                                           AA_classified_MM=table_predictions[2,1],
-                                           MM_classified_MM=table_predictions[2,2],
-                                           MM_classified_AA=table_predictions[1,2]))
-  }
-  
-  write.table(paste0("../Data/Permutations/Perm_",ID,".csv"),sep=";")
-  
-  
-}
-
-Permute_network_classification_r2d=function(ID){
-  
-  save_classif=tibble()
-  
-  #randomize each network while keeping degree and connectance fixed
-  list_net=lapply(1:length(Empirical_networks),function(x){
-    return(bipartite::nullmodel(Empirical_networks[[x]],1)[[1]])
-    
-  })
-  
-  
-  # Compute motif frequency
-  d_count=tibble()
-  
-  for (net in 1:length(list_net)){
-    motif_freq=as_tibble(t(mcount(list_net[[net]],six_node = T,normalisation = T,mean_weight = F,standard_dev = F)$normalise_sum))
-    colnames(motif_freq)=colnames(motif_freq)=paste0("Motif_",1:44)
-    d_count=rbind(d_count,motif_freq%>%add_column(., Network_ID=net,Category=save$Category[net])%>%
-                    dplyr::relocate(., Category,.before="Motif_1")%>%
-                    dplyr::relocate(.,Network_ID,.after="Category"))
-  }
-  
-  
-  nb_NN=50
-  for (b in sample(1:10000,nb_NN)){
-    
-    set.seed(b)
-    sample_test = sample(1:nrow(d_count),size = 0.2*nrow(d_count),replace = F)
-    
-    
-    data.test = d_count[sample_test,]
-    data.train = d_count[-sample_test,]
-    
-    formule = as.formula(c('Category ~ ', paste0(colnames(data.train[, 3:length(data.train)]), collapse = "+"))) #classify networks according to the type
-    nn_1layer = neuralnet(formule,data.train,hidden = 60 , 
-                          stepmax = 10 ** 8,lifesign = 'full', 
-                          linear.output=F,rep=1) # number of max step to train
-    
-    prediction_nn = predict(nn_1layer, data.test[,3:length(data.test)])
-    prediction_nn_test = prediction_nn > 0.5# the value of 0.5 is the threshold of the network to classify them
-    
-    u=1
-    for (i in prediction_nn_test){
-      
-      if (i=="FALSE"){prediction_nn_test[u]="Antagonistic"}
-      if( i=="TRUE"){prediction_nn_test[u]="Mutualistic"}
-      u=u+1
-    }
-    prediction_nn_test=as.data.frame(prediction_nn_test[,2])
-    table_predictions=table(prediction_nn_test[,1],data.test$Category)
-    
-    save_classif=rbind(save_classif,tibble(AA_classified_AA=table_predictions[1,1],
-                                           AA_classified_MM=table_predictions[2,1],
-                                           MM_classified_MM=table_predictions[2,2],
-                                           MM_classified_AA=table_predictions[1,2]))
-  }
-  
-  write.table(paste0("../Data/Permutations/Perm_r2d_",ID,".csv"),sep=";")
-  
-  
-}
-
-library(parallel)
-mclapply(1:200,Permute_network_classification_permaswap,mc.cores = 40)
-mclapply(1:200,Permute_network_classification_shuffleweb,mc.cores = 40)
-mclapply(1:200,Permute_network_classification_r2d,mc.cores = 40)
-
-
-
-d_all=tibble()
-for (k in list.files("../Data/Permutations/",".csv")
-     [-grep("perma",list.files("../Data/Permutations/",".csv"))]){
-  d_all=rbind(d_all,as_tibble(t(colMeans(read.table(paste0("../Data/Permutations/",k),sep=";")%>%
-                                          add_column(., f1_mut=as.numeric(sapply(1:nrow(.),
-                                                                      function(x){return(F1(.[x,]))})),
-                                                     f1_anta=as.numeric(sapply(1:nrow(.),
-                                                                    function(x){return(F1(.[x,],"anta"))}))))))%>%
-                add_column(., Type_rand="Connectance"))
-}
-
-for (k in list.files("../Data/Permutations/","r2d")){
-  d_all=rbind(d_all,as_tibble(t(colMeans(read.table(paste0("../Data/Permutations/",k),sep=";")%>%
-                                          add_column(., f1_mut=as.numeric(sapply(1:nrow(.),
-                                                                                 function(x){return(F1(.[x,]))})),
-                                                     f1_anta=as.numeric(sapply(1:nrow(.),
-                                                                               function(x){return(F1(.[x,],"anta"))}))))))%>%
-                add_column(., Type_rand="Degree"))
-}
-
-for (k in list.files("../Data/Permutations/","perma")){
-  d_all=rbind(d_all,as_tibble(t(colMeans(read.table(paste0("../Data/Permutations/",k),sep=";")%>%
-                                          add_column(., f1_mut=as.numeric(sapply(1:nrow(.),
-                                                                                 function(x){return(F1(.[x,]))})),
-                                                     f1_anta=as.numeric(sapply(1:nrow(.),
-                                                                               function(x){return(F1(.[x,],"anta"))}))))))%>%
-                add_column(., Type_rand="Degree+Connectance"))
-}
-
-d_melt=d_all%>%
-  mutate(.,
-         AA_classified_AA=.$AA_classified_AA/rowSums(.[,1:2]),
-         MM_classified_MM=.$MM_classified_MM/rowSums(.[,3:4]))%>%
-  melt(., measure.vars=c("MM_classified_MM","AA_classified_AA"))%>%
-  mutate(., variable=recode_factor(variable,
-                                   "MM_classified_MM"="Mutualistic networks",
-                                   "AA_classified_AA"="Antagonistic networks"))
-
-pval_MM=d_melt%>%
-  filter(.,variable=="Mutualistic networks")%>%
-  group_by(.,variable,Type_rand)%>%
-  summarise(., .groups="keep",pval=length(which(value>.84))/nrow(.))%>%
-  add_column(., y_text=.85)
-
-pval_AA=d_melt%>%
-  filter(.,variable=="Antagonistic networks")%>%
-  group_by(.,variable,Type_rand)%>%
-  summarise(., .groups="keep",pval=length(which(value>.65))/nrow(.))%>%
-  add_column(., y_text=.67)
-
-p1=ggplot(d_melt)+
-  geom_boxplot(aes(x=Type_rand,y=value,fill=variable),coef=1e30)+
-  geom_hline(data=tibble(variable=c("Antagonistic networks","Mutualistic networks"),
-                         y=c(.65,.84)),aes(yintercept = y))+
-  geom_text(data=rbind(pval_AA,pval_MM),
-            aes(x=Type_rand,y=y_text,label=round(pval,3)))+
-  labs(x="",fill="",y="% of correct classification")+
-  scale_fill_manual(values=c('#8fd175','#DECF3F'))+
-  
-  facet_wrap(.~variable,scales = "free")+
-  theme_classic()+
-  theme(legend.position = "bottom")
-
-d_melt=d_all%>%
-  mutate(.,
-         AA_classified_AA=.$AA_classified_AA/rowSums(.[,1:2]),
-         MM_classified_MM=.$MM_classified_MM/rowSums(.[,3:4]))%>%
-  melt(., measure.vars=c("f1_mut","f1_anta"))%>%
-  mutate(., variable=recode_factor(variable,
-                                   "f1_mut"="F-score mutualistic networks",
-                                   "f1_anta"="F-score antagonistic networks"))
-
-pval_MM=d_melt%>%
-  filter(.,variable=="F-score mutualistic networks")%>%
-  group_by(.,variable,Type_rand)%>%
-  summarise(., .groups="keep",pval=length(which(value>.82))/nrow(.))%>%
-  add_column(., y_text=.825)
-
-pval_AA=d_melt%>%
-  filter(.,variable=="F-score antagonistic networks")%>%
-  group_by(.,variable,Type_rand)%>%
-  summarise(., .groups="keep",pval=length(which(value>.68))/nrow(.))%>%
-  add_column(., y_text=.7)
-
-p2=ggplot(d_melt)+
-  geom_boxplot(aes(x=Type_rand,y=value,fill=variable),coef=1e30)+
-  geom_hline(data=tibble(variable=c("F-score antagonistic networks","F-score mutualistic networks"),
-                         y=c(.68,.82)),aes(yintercept = y))+
-  geom_text(data=rbind(pval_AA,pval_MM),
-            aes(x=Type_rand,y=y_text,label=round(pval,3)))+
-  labs(x="",fill="",y="F-score")+
-  scale_fill_manual(values=c('#8fd175','#DECF3F'))+
-  
-  facet_wrap(.~variable,scales = "free")+
-  theme_classic()+
-  theme(legend.position = "bottom")
-
-ggsave("./Figures/SI/Robustness_permutation.pdf",
-       ggarrange(p1+theme(strip.background.x = element_blank(),strip.text.x = element_blank()),
-                 p2+theme(strip.background.x = element_blank(),strip.text.x = element_blank(),legend.position = "none"),
-                 nrow=2,labels=letters[1:2]),width = 8,height = 8)
-
-
-
-
-
-
-## >> Robustness: 5 or 6 nodes only ----
-dir.create("./Data/5_nodes_only/",showWarnings = F)
-
-
-Robustness_5_motifs=function(ID){
-  
-  load("./Data/network_BD.RData")
-  data_empiric = read.csv("./Data/data_BD.csv",sep=";")
-  data_empiric$Category=as.character(data_empiric$Category)
-  data_empiric$Category[which(data_empiric$Category=="Empirical antagonistic")]="Antagonistic"
-  data_empiric$Category[which(data_empiric$Category=="Empirical mutualistic")]="Mutualistic"
-  save2=data_empiric
-  
-  percentage_classif=rep(0,nrow(data_empiric))
-  presence=rep(0,nrow(data_empiric))
-  
-  
-  d_count=tibble()
-  
-  for (net in 1:length(Empirical_networks)){
-    motif_freq=as_tibble(t(as.matrix(mcount(as.matrix(Empirical_networks[[net]]),normalisation = F,mean_weight = F,standard_dev = F,six_node=F)%>%
-                                       filter(., nodes==5)%>%
-                                       mutate(., frequency=frequency/sum(frequency))%>%
-                                       dplyr::select(., frequency))))
-    colnames(motif_freq)=paste0("Motif_",8:17)
-    d_count=rbind(d_count,motif_freq%>%add_column(., Network_ID=net,Category=data_empiric$Category[net])%>%
-                    dplyr::relocate(., Category,.before="Motif_8")%>%
-                    dplyr::relocate(.,Network_ID,.after="Category"))
-  }
-  
-  data_empiric=d_count
-  save=data_empiric
-  nb_tours=1
-  for (b in sample(1:10000,nb_tours)){
-    data.test=NULL
-    data.train=NULL
-    set.seed(b)
-    sample_test = sample(1:nrow(data_empiric),size = 0.2*nrow(data_empiric),replace = F)
-    
-    
-    data.test = data_empiric[sample_test,]
-    data.train = data_empiric[-sample_test,]
-    data.train=rbind(data.train)
-    
-    
-    formule = as.formula(c('Category ~ ', paste0(colnames(data.train[, 3:length(data.train)]), collapse = "+"))) #classify networks according to the type
-    nn_1layer = neuralnet(formule,data.train,hidden = 60 , 
-                          stepmax = 10 ** 8,lifesign = 'full', 
-                          linear.output=F,rep=1) # number of max step to train
-    
-    prediction_nn = predict(nn_1layer, data.test[,3:length(data.test)])
-    prediction_nn_test = prediction_nn > 0.5# the value of 0.5 is the threshold of the network to classify them
-    
-    u=1
-    for (i in prediction_nn_test){
-      
-      if (i=="FALSE"){prediction_nn_test[u]="Antagonistic"}
-      if( i=="TRUE"){prediction_nn_test[u]="Mutualistic"}
-      u=u+1
-    }
-    prediction_nn_test=as.data.frame(prediction_nn_test[,2])
-    prediction_nn_test$classif=data_empiric$Category[sample_test]
-    colnames(prediction_nn_test)=c("Prediction","Classification") #Classification = TRue category
-    
-    write.table(prediction_nn_test,paste0("./Data/5_nodes_only/NN_id_",ID,".csv"),sep=";")
-  }
-}
-
-Robustness_6_motifs=function(ID){
-  
-  load("./Data/network_BD.RData")
-  data_empiric = read.csv("./Data/data_BD.csv",sep=";")
-  data_empiric$Category=as.character(data_empiric$Category)
-  data_empiric$Category[which(data_empiric$Category=="Empirical antagonistic")]="Antagonistic"
-  data_empiric$Category[which(data_empiric$Category=="Empirical mutualistic")]="Mutualistic"
-  save2=data_empiric
-  
-  percentage_classif=rep(0,nrow(data_empiric))
-  presence=rep(0,nrow(data_empiric))
-  
-  
-  d_count=tibble()
-  
-  for (net in 1:length(Empirical_networks)){
-    motif_freq=as_tibble(t(as.matrix(mcount(as.matrix(Empirical_networks[[net]]),normalisation = F,mean_weight = F,standard_dev = F,six_node=T)%>%
-                                       filter(., nodes==6)%>%
-                                       mutate(., frequency=frequency/sum(frequency))%>%
-                                       dplyr::select(., frequency))))
-    colnames(motif_freq)=paste0("Motif_",18:44)
-    d_count=rbind(d_count,motif_freq%>%add_column(., Network_ID=net,Category=data_empiric$Category[net])%>%
-                    dplyr::relocate(., Category,.before="Motif_18")%>%
-                    dplyr::relocate(.,Network_ID,.after="Category"))
-  }
-  
-  data_empiric=d_count
-  save=data_empiric
-  nb_tours=1
-  for (b in sample(1:10000,nb_tours)){
-    data.test=NULL
-    data.train=NULL
-    set.seed(b)
-    sample_test = sample(1:nrow(data_empiric),size = 0.2*nrow(data_empiric),replace = F)
-    
-    
-    data.test = data_empiric[sample_test,]
-    data.train = data_empiric[-sample_test,]
-    data.train=rbind(data.train)
-    
-    
-    formule = as.formula(c('Category ~ ', paste0(colnames(data.train[, 3:length(data.train)]), collapse = "+"))) #classify networks according to the type
-    nn_1layer = neuralnet(formule,data.train,hidden = 60 , 
-                          stepmax = 10 ** 8,lifesign = 'full', 
-                          linear.output=F,rep=1) # number of max step to train
-    
-    prediction_nn = predict(nn_1layer, data.test[,3:length(data.test)])
-    prediction_nn_test = prediction_nn > 0.5# the value of 0.5 is the threshold of the network to classify them
-    
-    u=1
-    for (i in prediction_nn_test){
-      
-      if (i=="FALSE"){prediction_nn_test[u]="Antagonistic"}
-      if( i=="TRUE"){prediction_nn_test[u]="Mutualistic"}
-      u=u+1
-    }
-    prediction_nn_test=as.data.frame(prediction_nn_test[,2])
-    prediction_nn_test$classif=data_empiric$Category[sample_test]
-    colnames(prediction_nn_test)=c("Prediction","Classification") #Classification = TRue category
-    
-    write.table(prediction_nn_test,paste0("./Data/6_nodes_only/NN_id_",ID,".csv"),sep=";")
-  }
-}
-
-
-library(parallel)
-mclapply(1:80,Robustness_5_motifs,mc.cores = 10)
-mclapply(1:80,Robustness_6_motifs,mc.cores = 10)
-
-for (n_nodes in c(6)){
-  accuracy_classif=tibble()
-  for (k in list.files(paste0("../Data/",n_nodes,"_nodes_only/"))){
-    classif=read.table(paste0("../Data/",n_nodes,"_nodes_only/",k),sep=";")%>%
-      add_column(., ID=1:nrow(.))
-    table_classif=table(classif$Prediction,classif$Classification)
-    table_classif[2,]=table_classif[2,]/sum(table_classif[2,])
-    table_classif[1,]=table_classif[1,]/sum(table_classif[1,])
-    accuracy_classif=rbind(accuracy_classif,tibble(Antagonistic=table_classif[1,1],Mutualistic=table_classif[2,2],
-                                                   F_score_A=F1_Score(classif$Classification,classif$Prediction,"Mutualistic"),
-                                                   F_score_M=F1_Score(classif$Classification,classif$Prediction,"Antagonistic")))
-    
-  }
-  
-  # write.table(table_classif,paste0("./Figures/SI/Only_",5,".csv"),sep=";")
-}
-
-## >> Robustness: 4, 5 or 6 motifs ----
+## >> Robustness: 4, 5 or 6 motifs (Table S9) ----
 dir.create("./Data/4_nodes_only/",showWarnings = F)
 dir.create("./Data/5_nodes_only/",showWarnings = F)
 dir.create("./Data/6_nodes_only/",showWarnings = F)
@@ -2941,144 +3699,6 @@ Robustness_4_motifs_only=function(){
 
 Robustness_4_motifs_only()
 Robustness_4_5_motifs_only()
-
-
-
-
-## >> Robustness: permutation type of ecology ----
-dir.create("./Data/Random_ecology/",showWarnings = F)
-
-
-Robustness_Random_ecology=function(ID){
-  
-  load("./Data/network_BD.RData")
-  data_empiric = read.csv("./Data/data_BD.csv",sep=";")[,c(1,2,108:151)]
-  data_empiric$Category=as.character(data_empiric$Category)
-  data_empiric$Category[which(data_empiric$Category=="Empirical antagonistic")]="Antagonistic"
-  data_empiric$Category[which(data_empiric$Category=="Empirical mutualistic")]="Mutualistic"
-  save=data_empiric
-  
-
-  set.seed(ID)
-  
-  #Randomization of types
-  data_empiric$Category=NA
-  sample_ecology=sample(unique(save$Type),4)
-  while(all(sapply(sample_ecology,function(x){return(x %in% c("Host-Parasite","Host-Parasitoid","Bacteria-Phage","Herbivory"))}))){ #to avoid similar links
-    sample_ecology=sample(unique(save$Type),4)
-  }
-  
-  data_empiric$Category[which(data_empiric$Type %in% sample_ecology)]="Antagonistic"
-  data_empiric$Category[is.na(data_empiric$Category)]="Mutualistic"
-  
-  n_not_good_cat=sum(table(data_empiric$Category,data_empiric$Type)[2,c("Host-Parasite","Host-Parasitoid","Bacteria-Phage","Herbivory")])+
-    sum(table(data_empiric$Category,data_empiric$Type)[1,c("Anemone-Fish","Mycorrhiza","Plant-Ant","Pollination","Seed dispersal")])
-  
-  save_classif=tibble()
-
-  nb_tours=50
-  for (b in sample(1:10000,nb_tours)){
-    
-    data.test=NULL
-    data.train=NULL
-    set.seed(b)
-    sample_test = sample(1:nrow(data_empiric),size = 0.2*nrow(data_empiric),replace = F)
-    
-    
-    data.test = data_empiric[sample_test,]
-    data.train = data_empiric[-sample_test,]
-    data.train=rbind(data.train)
-    
-    
-    formule = as.formula(c('Category ~ ', paste0(colnames(data.train[, 3:length(data.train)]), collapse = "+"))) #classify networks according to the type
-    nn_1layer = neuralnet(formule,data.train,hidden = 60 , 
-                          stepmax = 10 ** 8,lifesign = 'full', 
-                          linear.output=F,rep=1) # number of max step to train
-    
-    prediction_nn = predict(nn_1layer, data.test[,3:length(data.test)])
-    prediction_nn_test = prediction_nn > 0.5# the value of 0.5 is the threshold of the network to classify them
-    
-    u=1
-    for (i in prediction_nn_test){
-      
-      if (i=="FALSE"){prediction_nn_test[u]="Antagonistic"}
-      if( i=="TRUE"){prediction_nn_test[u]="Mutualistic"}
-      u=u+1
-    }
-    prediction_nn_test=as.data.frame(prediction_nn_test[,2])
-    prediction_nn_test$classif=data_empiric$Category[sample_test]
-    colnames(prediction_nn_test)=c("Prediction","Classification") #Classification = TRue category
-    
-    
-    table_predictions=table(prediction_nn_test[,1],data.test$Category)
-    
-    save_classif=rbind(save_classif,tibble(AA_classified_AA=table_predictions[1,1],
-                                           AA_classified_MM=table_predictions[2,1],
-                                           MM_classified_MM=table_predictions[2,2],
-                                           MM_classified_AA=table_predictions[1,2]))
-    
-  }
-  
-  write.table(save_classif,paste0("./Data/Random_ecology/Random_ecology_",ID,".csv"),sep=";")
-  write.table(n_not_good_cat,paste0("./Data/Random_ecology/N_bad_category_",ID,".csv"),sep=";")
-}
-
-mclapply(1:300,Robustness_Random_ecology,mc.cores = 40)
-
-
-
-
-accuracy_classif=tibble()
-for (k in list.files("../Data/Random_ecology/","Random")){
-  classif=read.table(paste0("../Data/Random_ecology/",k),sep=";")
-  accuracy_classif=rbind(accuracy_classif,tibble(Antagonistic=colSums(classif)[1]/(sum(colSums(classif)[1:2])),
-                                                 Mutualistic=colSums(classif)[3]/(sum(colSums(classif)[3:4])),
-                                                 F_score_mut=mean(as.numeric(sapply(1:nrow(classif),function(x){
-                                                   return(F1(classif[x,]))
-                                                 }))),
-                                                 F_score_ant=mean(as.numeric(sapply(1:nrow(classif),function(x){
-                                                   return(F1(classif[x,],type = "ant"))
-                                                 })))))
-}
-
-n_not_good_cat=tibble()
-for (k in list.files("../Data/Random_ecology/","bad")){
-  n_not_good_cat=rbind(n_not_good_cat,read.table(paste0("../Data/Random_ecology/",k),sep=";"))
-}
-
-
-p1=ggplot(accuracy_classif%>%
-            add_column(., ID=1:nrow(.),
-                       N_good_cat=abs(n_not_good_cat$x-345),
-                       "Mean % of correct classification"=apply(accuracy_classif[,1:2],1,mean,na.rm=T),
-                       "Mean F-score"=rowMeans(.[,3:4]))%>%
-            melt(.,measure.vars=c("Mean % of correct classification","Mean F-score")))+
-  geom_point(aes(x=N_good_cat,y=value),fill="gray",shape=21,size=2)+
-  geom_smooth(aes(x=N_good_cat,y=value),color="black")+
-  labs(x="# of networks with changed nature of interaction",fill="",y="")+
-  scale_fill_manual(values=c('#DECF3F','#8fd175'))+
-  theme_classic()+
-  facet_wrap(.~variable,scales="free")+
-  theme(legend.position = "none",axis.text.x = element_text(size=14))
-
-
-
-
-p2=ggplot(accuracy_classif%>%
-            add_column(., ID=1:nrow(.),
-                       N_good_cat=abs(n_not_good_cat$x-345),
-                       "Difference % of correct classification between \n antagonistic and mutualistic networks"=abs(apply(accuracy_classif[,1:2],1,diff,na.rm=T)),
-                       "Difference in F-score between \n antagonistic and mutualistic networks"=abs(apply(accuracy_classif[,3:4],1,diff,na.rm=T)))%>%
-            melt(.,measure.vars=c("Difference % of correct classification between \n antagonistic and mutualistic networks","Difference in F-score between \n antagonistic and mutualistic networks")))+
-  geom_point(aes(x=N_good_cat,y=value),fill="gray",shape=21,size=2)+
-  geom_smooth(aes(x=N_good_cat,y=value),color="black")+
-  labs(x="# of networks with changed nature of interaction",fill="",y="")+
-  scale_fill_manual(values=c('#DECF3F','#8fd175'))+
-  theme_classic()+
-  facet_wrap(.~variable,scales="free")+
-  theme(legend.position = "none",axis.text.x = element_text(size=14))
-
-ggsave("./Figures/SI/Robustness_type_ecology.pdf",ggarrange(p1,p2,nrow = 2,labels=letters[1:2]),width = 6,height = 8)
 
 
 
